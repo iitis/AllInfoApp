@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">AllInfo</string>
+    <string name="str4btn_startstop_start">Rozpocznij pomiar</string>
+    <string name="str4btn_startstop_stop">Zatrzymaj pomiar</string>
+    <string name="str4tv_exper">Nazwa eksperymentu</string>
+    <string name="str4btn_isee">I see other user!</string>
+
+</resources>
