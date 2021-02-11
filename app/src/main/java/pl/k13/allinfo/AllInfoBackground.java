@@ -16,7 +16,6 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.display.DisplayManager;
 import android.icu.text.SimpleDateFormat;
-import android.net.wifi.ScanResult;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.Build;
@@ -26,7 +25,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.PowerManager;
-import android.os.SystemClock;
 import android.telephony.CellInfo;
 import android.telephony.CellInfoLte;
 import android.telephony.TelephonyManager;
@@ -36,21 +34,13 @@ import android.widget.Toast;
 import android.os.Process;
 
 import androidx.core.app.ActivityCompat;
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -66,11 +56,15 @@ public class AllInfoBackground extends Service implements SensorEventListener
     private static final String LOG_TAG = "AllMeasurementsService";
     private static final int ONGOING_NOTIFICATION_ID = 3;
     private Timer timerMainTick;
-    private Timer timerSaveSend;
+    private Timer timer500msTick;
+    private Timer timerSend;
 
     WifiManager manager;
 
     private SensorManager sensorManager;
+    private Sensor accelerometerSensor;
+    private Sensor gyroscopeSensor;
+    private Sensor magneticFieldSensor;
     private Sensor stepCountSensor;
     private Sensor lightSensor;
     private Sensor proximitySensor;
@@ -101,6 +95,21 @@ public class AllInfoBackground extends Service implements SensorEventListener
     {
         switch (event.sensor.getType())
         {
+            case Sensor.TYPE_ACCELEROMETER: //TODO fix to 3 dim
+                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[0]);
+                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[1]);
+                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[2]);
+                break;
+            case Sensor.TYPE_GYROSCOPE: //TODO fix to 3 dim
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[0]);
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[1]);
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[2]);
+                break;
+            case Sensor.TYPE_MAGNETIC_FIELD: //TODO fix to 3 dim
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[0]);
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[1]);
+                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[2]);
+                break;
             case Sensor.TYPE_STEP_COUNTER:
                 allMeasurementsHashMap.get(measureInit()).setSteps((int)event.values[0]);
                 break;
@@ -141,9 +150,14 @@ public class AllInfoBackground extends Service implements SensorEventListener
         {
             readWifiInfo();
             readLteInfo();
+            savefile();
         }
     }
 
+    protected void someReadingsUpdate()
+    {
+        allMeasurementsHashMap.get(measureInit()).addScreenOn(isScreenOn(getApplicationContext()));
+    }
     protected void readWifiInfo()
     {
         manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
@@ -195,65 +209,64 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     protected void sendPost()
     {
-        List<WifiMeasurement> meslist = new ArrayList<>();
-
-        if ((meslist != null) && (!meslist.isEmpty()))
-        {
-            Thread thread = new Thread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try
-                    {
-//                        URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
-                        URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("POST");
-                        conn.setRequestProperty("accept", "*/*");
-//                        conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
-                        conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
-                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                        conn.setRequestProperty("Accept", "application/json");
-
-                        conn.setDoOutput(true);
-                        conn.setDoInput(true);
-
-                        JSONArray jsonArray = new JSONArray();
-                        for (WifiMeasurement wfm : meslist)
-                        {
-                            jsonArray.put(wfm.toJSONObject());
-                        }
-
-                        JSONObject jsonCollection = new JSONObject();
-                        jsonCollection.put("collection", jsonArray);
-
-                        Log.i("JSON", jsonCollection.toString());
-                        DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                        os.writeBytes(jsonCollection.toString());
-
-                        os.flush();
-                        os.close();
-
-                        Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                        Log.i("MSG", conn.getResponseMessage());
-
-                        conn.disconnect();
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
-            });
-
-            thread.start();
-        }
+//        List<WifiMeasurement> meslist = new ArrayList<>();
+//
+//        if ((meslist != null) && (!meslist.isEmpty()))
+//        {
+//            Thread thread = new Thread(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
+//                    try
+//                    {
+////                        URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
+//                        URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
+//                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+//                        conn.setRequestMethod("POST");
+//                        conn.setRequestProperty("accept", "*/*");
+////                        conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
+//                        conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
+//                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+//                        conn.setRequestProperty("Accept", "application/json");
+//
+//                        conn.setDoOutput(true);
+//                        conn.setDoInput(true);
+//
+//                        JSONArray jsonArray = new JSONArray();
+//                        for (WifiMeasurement wfm : meslist)
+//                        {
+//                            jsonArray.put(wfm.toJSONObject());
+//                        }
+//
+//                        JSONObject jsonCollection = new JSONObject();
+//                        jsonCollection.put("collection", jsonArray);
+//
+//                        Log.i("JSON", jsonCollection.toString());
+//                        DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+//                        os.writeBytes(jsonCollection.toString());
+//
+//                        os.flush();
+//                        os.close();
+//
+//                        Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+//                        Log.i("MSG", conn.getResponseMessage());
+//
+//                        conn.disconnect();
+//                    } catch (Exception e)
+//                    {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
+//
+//            thread.start();
+//        }
     }
 
     void savefile()
     {
-        List<WifiMeasurement> meslist = new ArrayList<>();
-        if ((meslist != null) && (!meslist.isEmpty()))
+        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
             Thread thread = new Thread(new Runnable()
             {
@@ -278,10 +291,11 @@ public class AllInfoBackground extends Service implements SensorEventListener
                         try
                         {
                             bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
-                            for (WifiMeasurement wfm : meslist)
+                            if (allMeasurementsHashMap.containsKey(measureInit()-1))
                             {
-                                bos.write(wfm.toString().getBytes());
+                                bos.write(allMeasurementsHashMap.get(measureInit()-1).toString().getBytes());
                                 bos.write("\n".getBytes());
+                                Log.d(LOG_TAG, "File saved");
                             }
                         } catch (IOException e)
                         {
@@ -340,21 +354,43 @@ public class AllInfoBackground extends Service implements SensorEventListener
             }
         }, 0, 1000);
 
-        timerSaveSend = new Timer();
-        timerSaveSend.scheduleAtFixedRate(new TimerTask()
+        timer500msTick = new Timer();
+        timer500msTick.scheduleAtFixedRate(new TimerTask()
+        {
+            @Override
+            public void run()
+            {
+                someReadingsUpdate();
+            }
+        }, 0, 500);
+
+        timerSend = new Timer();
+        timerSend.scheduleAtFixedRate(new TimerTask()
         {
             @Override
             public void run()
             {
                 if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
                 {
-                    savefile();
                     sendPost();
                 }
             }
         }, 0, 3000);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+
+        accelerometerSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        if (accelerometerSensor != null)
+            sensorManager.registerListener(this, accelerometerSensor, 10000);
+
+        gyroscopeSensor = sensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
+        if (gyroscopeSensor != null)
+            sensorManager.registerListener(this, gyroscopeSensor, 10000);
+
+        magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
+        if (magneticFieldSensor != null)
+            sensorManager.registerListener(this, magneticFieldSensor, 10000);
+        
         stepCountSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (stepCountSensor != null)
             sensorManager.registerListener(this, stepCountSensor, 1000000);
@@ -417,6 +453,12 @@ public class AllInfoBackground extends Service implements SensorEventListener
     @Override
     public void onDestroy()
     {
+        if (accelerometerSensor != null)
+            sensorManager.unregisterListener(this, accelerometerSensor);
+        if (gyroscopeSensor != null)
+            sensorManager.unregisterListener(this, gyroscopeSensor);
+        if (magneticFieldSensor != null)
+            sensorManager.unregisterListener(this, magneticFieldSensor);
         if (lightSensor != null)
             sensorManager.unregisterListener(this, lightSensor);
         if (proximitySensor != null)
@@ -433,7 +475,8 @@ public class AllInfoBackground extends Service implements SensorEventListener
         this.unregisterReceiver(angleBroadcastReceiver);
 
         timerMainTick.cancel();
-        timerSaveSend.cancel();
+        timerSend.cancel();
+        timer500msTick.cancel();
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
             savefile();

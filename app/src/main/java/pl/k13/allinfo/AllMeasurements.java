@@ -215,4 +215,30 @@ public class AllMeasurements
     {
         this.LTEMeasurement = LTEMeasurement;
     }
+
+    @Override
+    public String toString()
+    {
+        //SortedSet<String> keySet = new TreeSet<>(map.keySet());
+        return "AllMeasurements{" +
+                "ExperimentId='" + ExperimentId + '\'' +
+                ", DeviceId='" + DeviceId + '\'' +
+                ", Timestamp=" + Timestamp +
+                ", Accelerometer=" + Accelerometer +
+                ", Gyroscope=" + Gyroscope +
+                ", OrientationX=" + OrientationX +
+                ", OrientationY=" + OrientationY +
+                ", OrientationZ=" + OrientationZ +
+                ", Steps=" + Steps +
+                ", Light=" + Light +
+                ", ScreenOn=" + ScreenOn +
+                ", Proximity=" + Proximity +
+                ", Stationary=" + Stationary +
+                ", Motion=" + Motion +
+                ", SignificantMotion=" + SignificantMotion +
+                ", GoogleActivity=" + GoogleActivity +
+                ", WifiMeasurement=" + WifiMeasurement +
+                ", LTEMeasurement=" + LTEMeasurement +
+                '}';
+    }
 }
