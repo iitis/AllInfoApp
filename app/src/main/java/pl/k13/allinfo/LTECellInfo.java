@@ -133,9 +133,9 @@ public class LTECellInfo
     @Override
     public String toString()
     {
-        return " " +
-                " CI_NetName=" + CI_NetName +
-                " CI_Ci=" + CI_Ci +
+        return "LTECellInfo{" +
+                "CI_NetName='" + CI_NetName + '\'' +
+                ", CI_Ci=" + CI_Ci +
                 ", CI_Mnc=" + CI_Mnc +
                 ", CI_Pci=" + CI_Pci +
                 ", CI_Tac=" + CI_Tac +
@@ -143,7 +143,6 @@ public class LTECellInfo
                 ", SS_Rsrp=" + SS_Rsrp +
                 ", SS_Rsrq=" + SS_Rsrq +
                 ", SS_Rssnr=" + SS_Rssnr +
-                ' ';
+                '}';
     }
-
 }

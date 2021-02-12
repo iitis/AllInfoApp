@@ -44,6 +44,7 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -76,18 +77,38 @@ public class AllInfoBackground extends Service implements SensorEventListener
     private int lastAngle = -360;
     BroadcastReceiver angleBroadcastReceiver;
 
+    private float[] lastAccelerometer = new float[3];
+    private float[] lastMagnetometer = new float[3];
+    private boolean accelerometerNotUsed = false;
+    private boolean magnetometerNotUsed = false;
+
+    private float[] rotationMatrix = new float[9];
+    private float[] orientation = new float[3];
+
     private Long measureInit()
     {
         long currentTime = System.currentTimeMillis() / 1000;
         if (!allMeasurementsHashMap.containsKey(currentTime))
         {
             AllMeasurements newAllMess = new AllMeasurements();
-            newAllMess.setTimestamp(currentTime*1000);
+            newAllMess.setTimestamp(currentTime * 1000);
             newAllMess.setDeviceId(deviceId);
             newAllMess.setExperimentId(ExperimentID);
             allMeasurementsHashMap.put(currentTime, newAllMess);
         }
-    return currentTime;
+        return currentTime;
+    }
+
+    private void getOrientation()
+    {
+        if (accelerometerNotUsed && magnetometerNotUsed)
+        {
+            SensorManager.getRotationMatrix(rotationMatrix, null, lastAccelerometer, lastMagnetometer);
+            SensorManager.getOrientation(rotationMatrix, orientation);
+            Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addOrientation(orientation[0], orientation[1], orientation[2]);
+            accelerometerNotUsed = false;
+            magnetometerNotUsed = false;
+        }
     }
 
     @Override
@@ -96,37 +117,36 @@ public class AllInfoBackground extends Service implements SensorEventListener
         switch (event.sensor.getType())
         {
             case Sensor.TYPE_ACCELEROMETER: //TODO fix to 3 dim
-                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[0]);
-                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[1]);
-                allMeasurementsHashMap.get(measureInit()).addAccelerometer(event.values[2]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addAccelerometer(event.values[0], event.values[1], event.values[2]);
+                System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.length);
+                accelerometerNotUsed = true;
+                getOrientation();
                 break;
             case Sensor.TYPE_GYROSCOPE: //TODO fix to 3 dim
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[0]);
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[1]);
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[2]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addGyroscope(event.values[0], event.values[1], event.values[2]);
                 break;
-            case Sensor.TYPE_MAGNETIC_FIELD: //TODO fix to 3 dim
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[0]);
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[1]);
-                allMeasurementsHashMap.get(measureInit()).addGyroscope(event.values[2]);
+            case Sensor.TYPE_MAGNETIC_FIELD:
+                System.arraycopy(event.values, 0, lastMagnetometer, 0, event.values.length);
+                magnetometerNotUsed = true;
+                getOrientation();
                 break;
             case Sensor.TYPE_STEP_COUNTER:
-                allMeasurementsHashMap.get(measureInit()).setSteps((int)event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setSteps((int) event.values[0]);
                 break;
             case Sensor.TYPE_LIGHT:
-                allMeasurementsHashMap.get(measureInit()).addLight(event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addLight(event.values[0]);
                 break;
             case Sensor.TYPE_PROXIMITY:
-                allMeasurementsHashMap.get(measureInit()).addProximity(event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addProximity(event.values[0]);
                 break;
             case Sensor.TYPE_STATIONARY_DETECT:
-                allMeasurementsHashMap.get(measureInit()).setStationary(event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setStationary(event.values[0]);
                 break;
             case Sensor.TYPE_MOTION_DETECT:
-                allMeasurementsHashMap.get(measureInit()).setMotion(event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setMotion(event.values[0]);
                 break;
             case Sensor.TYPE_SIGNIFICANT_MOTION:
-                allMeasurementsHashMap.get(measureInit()).setSignificantMotion(event.values[0]);
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setSignificantMotion(event.values[0]);
                 break;
         }
     }
@@ -156,11 +176,13 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     protected void someReadingsUpdate()
     {
-        allMeasurementsHashMap.get(measureInit()).addScreenOn(isScreenOn(getApplicationContext()));
+        Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addScreenOn(isScreenOn(getApplicationContext()));
     }
+
     protected void readWifiInfo()
     {
         manager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+        assert manager != null;
         WifiInfo info = manager.getConnectionInfo();
         WifiMeasurement wifimes = new WifiMeasurement();
         wifimes.setSsid(info.getSSID());
@@ -277,7 +299,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
                     {
                         BufferedOutputStream bos = null;
                         @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
-                        Log.d(LOG_TAG, "File: "+todayFile.getAbsolutePath());
+                        Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
                         File dir = new File(getExternalFilesDir(null).getAbsolutePath());
                         File[] filesInDir = dir.listFiles();
                         for (File f : filesInDir)  //deletes older files
@@ -291,9 +313,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
                         try
                         {
                             bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
-                            if (allMeasurementsHashMap.containsKey(measureInit()-1))
+                            if (allMeasurementsHashMap.containsKey(measureInit() - 1))
                             {
-                                bos.write(allMeasurementsHashMap.get(measureInit()-1).toString().getBytes());
+                                bos.write(allMeasurementsHashMap.get(measureInit() - 1).toString().getBytes());
                                 bos.write("\n".getBytes());
                                 Log.d(LOG_TAG, "File saved");
                             }
@@ -390,7 +412,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
         magneticFieldSensor = sensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
         if (magneticFieldSensor != null)
             sensorManager.registerListener(this, magneticFieldSensor, 10000);
-        
+
         stepCountSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
         if (stepCountSensor != null)
             sensorManager.registerListener(this, stepCountSensor, 1000000);
@@ -489,20 +511,26 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     /**
      * Is the screen of the device on.
+     *
      * @param context the context
      * @return true when (at least one) screen is on
      */
-    public boolean isScreenOn(Context context) {
-        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+    public boolean isScreenOn(Context context)
+    {
+        if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH)
+        {
             DisplayManager dm = (DisplayManager) context.getSystemService(Context.DISPLAY_SERVICE);
             boolean screenOn = false;
-            for (Display display : dm.getDisplays()) {
-                if (display.getState() != Display.STATE_OFF) {
+            for (Display display : dm.getDisplays())
+            {
+                if (display.getState() != Display.STATE_OFF)
+                {
                     screenOn = true;
                 }
             }
             return screenOn;
-        } else {
+        } else
+        {
             PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
             //noinspection deprecation
             return pm.isScreenOn();

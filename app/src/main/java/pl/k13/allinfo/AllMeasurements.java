@@ -1,17 +1,19 @@
 package pl.k13.allinfo;
 
+import android.util.Log;
+
 import java.util.HashMap;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 public class AllMeasurements
 {
     private String ExperimentId;
     private String DeviceId;
     private long Timestamp;
-    private HashMap<Long, Float> Accelerometer;
-    private HashMap<Long, Float>  Gyroscope;
-    private HashMap<Long, Float>  OrientationX;
-    private HashMap<Long, Float>  OrientationY;
-    private HashMap<Long, Float>  OrientationZ;
+    private HashMap<Long, FloatXYZ> Accelerometer;
+    private HashMap<Long, FloatXYZ>  Gyroscope;
+    private HashMap<Long, FloatXYZ> Orientation;
     private int Steps;
     private HashMap<Long, Float>  Light;
     private HashMap<Long, Boolean>  ScreenOn;
@@ -27,9 +29,7 @@ public class AllMeasurements
     {
         Accelerometer = new HashMap<>();
         Gyroscope = new HashMap<>();
-        OrientationX = new HashMap<>();
-        OrientationY = new HashMap<>();
-        OrientationZ = new HashMap<>();
+        Orientation = new HashMap<>();
         Light = new HashMap<>();
         ScreenOn = new HashMap<>();
         Proximity = new HashMap<>();
@@ -66,54 +66,34 @@ public class AllMeasurements
         Timestamp = timestamp;
     }
 
-    public HashMap<Long, Float> getAccelerometer()
+    public HashMap<Long, FloatXYZ> getAccelerometer()
     {
         return Accelerometer;
     }
 
-    public void addAccelerometer(float accelerometer)
+    public void addAccelerometer(float accelerometerX, float accelerometerY, float accelerometerZ)
     {
-        Accelerometer.put(System.currentTimeMillis(), accelerometer);
+        Accelerometer.put(System.currentTimeMillis(), new FloatXYZ(accelerometerX, accelerometerY, accelerometerZ));
     }
 
-    public HashMap<Long, Float> getGyroscope()
+    public HashMap<Long, FloatXYZ> getGyroscope()
     {
         return Gyroscope;
     }
 
-    public void addGyroscope(float gyroscope)
+    public void addGyroscope(float gyroscopeX, float gyroscopeY, float gyroscopeZ)
     {
-        Gyroscope.put(System.currentTimeMillis(), gyroscope);
+        Gyroscope.put(System.currentTimeMillis(), new FloatXYZ(gyroscopeX, gyroscopeY, gyroscopeZ));
     }
 
-    public HashMap<Long, Float> getOrientationX()
+    public HashMap<Long, FloatXYZ> getOrientation()
     {
-        return OrientationX;
+        return Orientation;
     }
 
-    public void addOrientationX(float orientationX)
+    public void addOrientation(float orientationAzimuth, float orientationPitch, float orientationRoll)
     {
-        OrientationX.put(System.currentTimeMillis(), orientationX);
-    }
-
-    public HashMap<Long, Float> getOrientationY()
-    {
-        return OrientationY;
-    }
-
-    public void addOrientationY(float orientationY)
-    {
-        OrientationY.put(System.currentTimeMillis(), orientationY);
-    }
-
-    public HashMap<Long, Float> getOrientationZ()
-    {
-        return OrientationZ;
-    }
-
-    public void  addOrientationZ(float orientationZ)
-    {
-        OrientationZ.put(System.currentTimeMillis(), orientationZ);
+        Orientation.put(System.currentTimeMillis(), new FloatXYZ(orientationAzimuth, orientationPitch, orientationRoll));
     }
 
     public int getSteps()
@@ -216,23 +196,64 @@ public class AllMeasurements
         this.LTEMeasurement = LTEMeasurement;
     }
 
+    private String formatListByTime3F(HashMap<Long, FloatXYZ> input)
+    {
+        String outputString = "";
+        SortedSet<Long> keyList = new TreeSet<>(input.keySet());
+        for (Long key:keyList)
+        {
+            outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
+        }
+        return outputString;
+    }
+
+    private String formatListByTimeF(HashMap<Long, Float> input)
+    {
+        String outputString = "";
+        SortedSet<Long> keyList = new TreeSet<>(input.keySet());
+        for (Long key:keyList)
+        {
+            outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
+        }
+        return outputString;
+    }
+    private String formatListByTimeB(HashMap<Long, Boolean> input)
+    {
+        String outputString = "";
+        SortedSet<Long> keyList = new TreeSet<>(input.keySet());
+        for (Long key:keyList)
+        {
+            outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
+        }
+        return outputString;
+    }
+
     @Override
     public String toString()
     {
-        //SortedSet<String> keySet = new TreeSet<>(map.keySet());
+
+
+
+
+//        SortedSet<Long> gyroscopeKeyList = new TreeSet<>(Accelerometer.keySet());
+//        String gyroscopeString = "";
+//        for (Long key:gyroscopeKeyList)
+//        {
+//            gyroscopeString += "{" + key.toString() + "=" + Gyroscope.get(key).toString() + "}, ";
+//        }
+
+
         return "AllMeasurements{" +
                 "ExperimentId='" + ExperimentId + '\'' +
                 ", DeviceId='" + DeviceId + '\'' +
                 ", Timestamp=" + Timestamp +
-                ", Accelerometer=" + Accelerometer +
-                ", Gyroscope=" + Gyroscope +
-                ", OrientationX=" + OrientationX +
-                ", OrientationY=" + OrientationY +
-                ", OrientationZ=" + OrientationZ +
+                ", Accelerometer=" + formatListByTime3F(Accelerometer) +
+                ", Gyroscope=" + formatListByTime3F(Gyroscope) +
+                ", Orientation=" + formatListByTime3F(Orientation) +
                 ", Steps=" + Steps +
-                ", Light=" + Light +
-                ", ScreenOn=" + ScreenOn +
-                ", Proximity=" + Proximity +
+                ", Light=" + formatListByTimeF(Light) +
+                ", ScreenOn=" + formatListByTimeB(ScreenOn) +
+                ", Proximity=" + formatListByTimeF(Proximity) +
                 ", Stationary=" + Stationary +
                 ", Motion=" + Motion +
                 ", SignificantMotion=" + SignificantMotion +

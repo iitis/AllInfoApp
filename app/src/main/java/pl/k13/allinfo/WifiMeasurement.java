@@ -104,8 +104,12 @@ public class WifiMeasurement implements Parcelable
     @Override
     public String toString()
     {
-//        return this.experimentId + " " + this.timestamp + " " + this.ssid + " " + this.bssid + " " + this.rssi  + " " + this.angle + " " + this.other1 + " " + this.other2;
-        return this.ssid + " " + this.bssid + " " + this.rssi  + " " + this.angle;
+        return "WifiMeasurement{" +
+                "bssid='" + bssid + '\'' +
+                ", ssid='" + ssid + '\'' +
+                ", rssi=" + rssi +
+                ", angle=" + angle +
+                '}';
     }
 
     public String toStringShort()
