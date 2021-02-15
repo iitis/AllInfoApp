@@ -10,6 +10,8 @@ public class AllMeasurements
 {
     private String ExperimentId;
     private String DeviceId;
+    private String UserMotion;
+    private String UserPhoneLocation;
     private long Timestamp;
     private HashMap<Long, FloatXYZ> Accelerometer;
     private HashMap<Long, FloatXYZ>  Gyroscope;
@@ -54,6 +56,26 @@ public class AllMeasurements
     public void setDeviceId(String deviceId)
     {
         DeviceId = deviceId;
+    }
+
+    public String getUserMotion()
+    {
+        return UserMotion;
+    }
+
+    public void setUserMotion(String userMotion)
+    {
+        UserMotion = userMotion;
+    }
+
+    public String getUserPhoneLocation()
+    {
+        return UserPhoneLocation;
+    }
+
+    public void setUserPhoneLocation(String userPhoneLocation)
+    {
+        UserPhoneLocation = userPhoneLocation;
     }
 
     public long getTimestamp()
@@ -217,6 +239,7 @@ public class AllMeasurements
         }
         return outputString;
     }
+
     private String formatListByTimeB(HashMap<Long, Boolean> input)
     {
         String outputString = "";
@@ -231,25 +254,12 @@ public class AllMeasurements
     @Override
     public String toString()
     {
-
-
-
-
-//        SortedSet<Long> gyroscopeKeyList = new TreeSet<>(Accelerometer.keySet());
-//        String gyroscopeString = "";
-//        for (Long key:gyroscopeKeyList)
-//        {
-//            gyroscopeString += "{" + key.toString() + "=" + Gyroscope.get(key).toString() + "}, ";
-//        }
-
-
-        return "AllMeasurements{" +
-                "ExperimentId='" + ExperimentId + '\'' +
+        return "{" +
+                "Timestamp=" + Timestamp +
+                ", ExperimentId='" + ExperimentId + '\'' +
                 ", DeviceId='" + DeviceId + '\'' +
-                ", Timestamp=" + Timestamp +
-                ", Accelerometer=" + formatListByTime3F(Accelerometer) +
-                ", Gyroscope=" + formatListByTime3F(Gyroscope) +
-                ", Orientation=" + formatListByTime3F(Orientation) +
+                ", UserPhoneLocation='" + UserPhoneLocation + '\'' +
+                ", UserMotion='" + UserMotion + '\'' +
                 ", Steps=" + Steps +
                 ", Light=" + formatListByTimeF(Light) +
                 ", ScreenOn=" + formatListByTimeB(ScreenOn) +
@@ -258,6 +268,9 @@ public class AllMeasurements
                 ", Motion=" + Motion +
                 ", SignificantMotion=" + SignificantMotion +
                 ", GoogleActivity=" + GoogleActivity +
+                ", Accelerometer=" + formatListByTime3F(Accelerometer) +
+                ", Gyroscope=" + formatListByTime3F(Gyroscope) +
+                ", Orientation=" + formatListByTime3F(Orientation) +
                 ", WifiMeasurement=" + WifiMeasurement +
                 ", LTEMeasurement=" + LTEMeasurement +
                 '}';

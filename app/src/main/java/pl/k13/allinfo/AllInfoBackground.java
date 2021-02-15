@@ -18,6 +18,7 @@ import android.hardware.display.DisplayManager;
 import android.icu.text.SimpleDateFormat;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -33,7 +34,9 @@ import android.view.Display;
 import android.widget.Toast;
 import android.os.Process;
 
+import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -50,6 +53,14 @@ import java.util.TimerTask;
 
 import static java.lang.Math.round;
 import static pl.k13.allinfo.MainActivity.ExperimentID;
+import static pl.k13.allinfo.MainActivity.stringUserMotion;
+import static pl.k13.allinfo.MainActivity.stringUserPhoneLocation;
+
+import com.google.android.gms.location.ActivityRecognitionClient;
+import com.google.android.gms.location.DetectedActivity;
+import com.google.android.gms.tasks.OnFailureListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 
 public class AllInfoBackground extends Service implements SensorEventListener
 {
@@ -75,7 +86,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
     HashMap<Long, AllMeasurements> allMeasurementsHashMap = new HashMap<>();
     private final String deviceId = android.os.Build.MODEL; //android.os.Build.MANUFACTURER + android.os.Build.PRODUCT
     private int lastAngle = -360;
+    BroadcastReceiver activityBroadcastReceiver;
     BroadcastReceiver angleBroadcastReceiver;
+
 
     private float[] lastAccelerometer = new float[3];
     private float[] lastMagnetometer = new float[3];
@@ -84,6 +97,19 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     private float[] rotationMatrix = new float[9];
     private float[] orientation = new float[3];
+
+    private Intent mIntentService;
+    private PendingIntent mPendingIntent;
+    private ActivityRecognitionClient mActivityRecognitionClient;
+    IBinder mBinder = new AllInfoBackground.LocalBinder();
+
+    public class LocalBinder extends Binder
+    {
+        public AllInfoBackground getServerInstance()
+        {
+            return AllInfoBackground.this;
+        }
+    }
 
     private Long measureInit()
     {
@@ -171,10 +197,18 @@ public class AllInfoBackground extends Service implements SensorEventListener
             readWifiInfo();
             readLteInfo();
             savefile();
+            someReadingsUpdate1000ms();
         }
     }
 
-    protected void someReadingsUpdate()
+    protected void someReadingsUpdate1000ms()
+    {
+        Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setUserMotion(stringUserMotion);
+        Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setUserPhoneLocation(stringUserPhoneLocation);
+    }
+
+
+    protected void someReadingsUpdate500ms()
     {
         Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addScreenOn(isScreenOn(getApplicationContext()));
     }
@@ -356,6 +390,10 @@ public class AllInfoBackground extends Service implements SensorEventListener
         // Get the HandlerThread's Looper and use it for our Handler
         Looper serviceLooper = thread.getLooper();
         serviceHandler = new ServiceHandler(serviceLooper);
+        mActivityRecognitionClient = new ActivityRecognitionClient(this);
+        mIntentService = new Intent(this, DetectedActivitiesIntentService.class);
+        mPendingIntent = PendingIntent.getService(this, 1, mIntentService, PendingIntent.FLAG_UPDATE_CURRENT);
+        requestActivityUpdatesButtonHandler();
     }
 
     @Override
@@ -382,7 +420,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             @Override
             public void run()
             {
-                someReadingsUpdate();
+                someReadingsUpdate500ms();
             }
         }, 0, 500);
 
@@ -447,9 +485,24 @@ public class AllInfoBackground extends Service implements SensorEventListener
                 Toast.makeText(context, "Angle: " + lastAngle, Toast.LENGTH_LONG).show();
             }
         };
+        this.registerReceiver(angleBroadcastReceiver, new IntentFilter("pl.k13.wifiinfo.Broadcast"));
 
-        IntentFilter filter = new IntentFilter("pl.k13.wifiinfo.Broadcast");
-        this.registerReceiver(angleBroadcastReceiver, filter);
+
+        activityBroadcastReceiver = new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                Toast.makeText(context, "cos przyszlo", Toast.LENGTH_LONG).show();
+
+                int type = intent.getIntExtra("type", -1);
+                int confidence = intent.getIntExtra("confidence", 0);
+                handleUserActivity(type, confidence);
+            }
+        };
+        LocalBroadcastManager.getInstance(this).registerReceiver(activityBroadcastReceiver,
+                new IntentFilter("activity_intent"));
+
 
         Intent notificationIntent = new Intent(this, MainActivity.class);
         PendingIntent pendingIntent =
@@ -468,8 +521,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
     @Override
     public IBinder onBind(Intent intent)
     {
-        // We don't provide binding, so return null
-        return null;
+        return mBinder;
     }
 
     @Override
@@ -495,6 +547,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             sensorManager.unregisterListener(this, motionDetectSensor);
 
         this.unregisterReceiver(angleBroadcastReceiver);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(activityBroadcastReceiver);
 
         timerMainTick.cancel();
         timerSend.cancel();
@@ -505,7 +558,118 @@ public class AllInfoBackground extends Service implements SensorEventListener
             sendPost();
         }
         allMeasurementsHashMap.clear();
+        removeActivityUpdatesButtonHandler();
         Toast.makeText(this, "Zapis zatrzymany", Toast.LENGTH_SHORT).show();
+    }
+
+    public void requestActivityUpdatesButtonHandler()
+    {
+        Task<Void> task = mActivityRecognitionClient.requestActivityUpdates(
+                5000,
+                mPendingIntent);
+
+        task.addOnSuccessListener(new OnSuccessListener<Void>()
+        {
+            @Override
+            public void onSuccess(Void result)
+            {
+                Toast.makeText(getApplicationContext(),
+                        "Successfully requested activity updates",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        task.addOnFailureListener(new OnFailureListener()
+        {
+            @Override
+            public void onFailure(@NonNull Exception e)
+            {
+                Toast.makeText(getApplicationContext(),
+                        "Requesting activity updates failed to start",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+    }
+
+    public void removeActivityUpdatesButtonHandler()
+    {
+        Task<Void> task = mActivityRecognitionClient.removeActivityUpdates(
+                mPendingIntent);
+        task.addOnSuccessListener(new OnSuccessListener<Void>()
+        {
+            @Override
+            public void onSuccess(Void result)
+            {
+                Toast.makeText(getApplicationContext(),
+                        "Removed activity updates successfully!",
+                        Toast.LENGTH_SHORT)
+                        .show();
+            }
+        });
+
+        task.addOnFailureListener(new OnFailureListener()
+        {
+            @Override
+            public void onFailure(@NonNull Exception e)
+            {
+                Toast.makeText(getApplicationContext(), "Failed to remove activity updates!",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+
+    private void handleUserActivity(int type, int confidence)
+    {
+        String label = "";
+        switch (type)
+        {
+            case DetectedActivity.IN_VEHICLE:
+            {
+                label = "IN_VEHICLE";
+                break;
+            }
+            case DetectedActivity.ON_BICYCLE:
+            {
+                label = "ON_BICYCLE";
+                break;
+            }
+            case DetectedActivity.ON_FOOT:
+            {
+                label = "ON_FOOT";
+                break;
+            }
+            case DetectedActivity.WALKING:
+            {
+                label = "WALKING";
+                break;
+            }
+            case DetectedActivity.RUNNING:
+            {
+                label = "RUNNING";
+                break;
+            }
+            case DetectedActivity.STILL:
+            {
+                label = "STILL";
+                break;
+            }
+            case DetectedActivity.TILTING:
+            {
+                label = "TILTING";
+                break;
+            }
+            case DetectedActivity.UNKNOWN:
+            {
+                label = "UNKNOWN";
+                break;
+            }
+        }
+        Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setGoogleActivity(label, confidence);
+        Toast.makeText(getApplicationContext(), "Type: " + label + ", confidence: " + confidence, Toast.LENGTH_LONG).show();
+        Log.e(LOG_TAG, "User activity: " + label + ", Confidence: " + confidence);
     }
 
 

@@ -104,7 +104,7 @@ public class WifiMeasurement implements Parcelable
     @Override
     public String toString()
     {
-        return "WifiMeasurement{" +
+        return "{" +
                 "bssid='" + bssid + '\'' +
                 ", ssid='" + ssid + '\'' +
                 ", rssi=" + rssi +

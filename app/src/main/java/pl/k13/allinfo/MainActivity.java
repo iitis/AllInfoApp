@@ -25,6 +25,8 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
+import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -45,6 +47,8 @@ public class MainActivity extends AppCompatActivity
     SharedPreferences sharedpreferences;
     private static final String STREXPID = "ExperimentID";
     public static String ExperimentID = "ExperimentID";
+    public static String stringUserPhoneLocation = "";
+    public static String stringUserMotion = "";
 
 
     @Override
@@ -117,6 +121,13 @@ public class MainActivity extends AppCompatActivity
                 }
             }
         });
+
+        ((RadioGroup) findViewById(R.id.userPhoneLocation))
+                .setOnCheckedChangeListener((group, checkedId) -> stringUserPhoneLocation = ((RadioButton) findViewById(checkedId)).getText().toString());
+
+        ((RadioGroup) findViewById(R.id.userMotionType))
+                .setOnCheckedChangeListener((group, checkedId) -> stringUserMotion = ((RadioButton) findViewById(checkedId)).getText().toString());
+
 
         LocalBroadcastManager.getInstance(this).registerReceiver(mMessageReceiver,
                 new IntentFilter("wifiinfonew"));

@@ -133,7 +133,7 @@ public class LTECellInfo
     @Override
     public String toString()
     {
-        return "LTECellInfo{" +
+        return "{" +
                 "CI_NetName='" + CI_NetName + '\'' +
                 ", CI_Ci=" + CI_Ci +
                 ", CI_Mnc=" + CI_Mnc +
