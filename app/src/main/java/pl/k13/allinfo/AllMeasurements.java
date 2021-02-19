@@ -2,7 +2,14 @@ package pl.k13.allinfo;
 
 import android.util.Log;
 
+import org.json.JSONException;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -14,18 +21,112 @@ public class AllMeasurements
     private String UserPhoneLocation;
     private long Timestamp;
     private HashMap<Long, FloatXYZ> Accelerometer;
-    private HashMap<Long, FloatXYZ>  Gyroscope;
+    private HashMap<Long, FloatXYZ> Gyroscope;
     private HashMap<Long, FloatXYZ> Orientation;
     private int Steps;
-    private HashMap<Long, Float>  Light;
-    private HashMap<Long, Boolean>  ScreenOn;
-    private HashMap<Long, Float>  Proximity;
+    private HashMap<Long, Float> Light;
+    private HashMap<Long, Boolean> ScreenOn;
+    private HashMap<Long, Float> Proximity;
     private float Stationary;
     private float Motion;
     private float SignificantMotion;
     private HashMap<String, Float> GoogleActivity;
     private WifiMeasurement WifiMeasurement;
     private LTECellInfo LTEMeasurement;
+
+
+    public List<AllMeas2DB> toAllMesList() throws JSONException
+    {
+        List<AllMeas2DB> output = new ArrayList<>();
+        AllMeas2DB m = new AllMeas2DB(this.Timestamp, this.ExperimentId, this.DeviceId);
+        m.setExperimentId(this.ExperimentId);
+        m.setDeviceId(this.DeviceId);
+        m.setUserMotion(this.UserMotion);
+        m.setuserPhoneLocation(this.UserPhoneLocation);
+        m.setSteps(this.Steps);
+        m.setStationary(this.Stationary);
+        m.setMotion(this.Motion);
+        m.setSignificantMotion(this.SignificantMotion);
+        m.setWifiName(this.WifiMeasurement.getSsid());
+        m.setWifiRssi(this.WifiMeasurement.getRssi());
+        m.setWifiOther(this.WifiMeasurement.getBssid() + ", " + this.WifiMeasurement.getAngle());
+        m.setLteRssi(this.LTEMeasurement.getSS_Rsrp());
+        m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
+        Log.d("TOALLMES", m.toJSONObject().toString());
+        output.add(m);
+
+//        for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
+//        {
+//            Long key = entry.getKey();
+//            FloatXYZ value = entry.getValue();
+//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+//            mes.setAccelerometerX(value.getX());
+//            mes.setAccelerometerY(value.getY());
+//            mes.setAccelerometerZ(value.getZ());
+//            output.add(mes);
+//        }
+//
+//        for (Map.Entry<Long, FloatXYZ> entry : Gyroscope.entrySet())
+//        {
+//            Long key = entry.getKey();
+//            FloatXYZ value = entry.getValue();
+//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+//            mes.setGyroscopeX(value.getX());
+//            mes.setGyroscopeY(value.getY());
+//            mes.setGyroscopeZ(value.getZ());
+//            output.add(mes);
+//        }
+//
+//        for (Map.Entry<Long, FloatXYZ> entry : Orientation.entrySet())
+//        {
+//            Long key = entry.getKey();
+//            FloatXYZ value = entry.getValue();
+//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+//            mes.setOrientationX(value.getX());
+//            mes.setOrientationY(value.getY());
+//            mes.setOrientationZ(value.getZ());
+//            output.add(mes);
+//        }
+
+        for (Map.Entry<Long, Float> entry : Light.entrySet())
+        {
+            Long key = entry.getKey();
+            Float value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setLight(value);
+            output.add(mes);
+        }
+
+        for (Map.Entry<Long, Boolean> entry : ScreenOn.entrySet())
+        {
+            Long key = entry.getKey();
+            Boolean value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setScreenOn(value);
+            output.add(mes);
+        }
+
+        for (Map.Entry<Long, Float> entry : Proximity.entrySet())
+        {
+            Long key = entry.getKey();
+            Float value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setProximity(value);
+            output.add(mes);
+        }
+
+        for (Map.Entry<String, Float> entry : GoogleActivity.entrySet())
+        {
+            String key = entry.getKey();
+            Float value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(this.Timestamp, this.ExperimentId, this.DeviceId);
+            mes.setGoogleActivityType(key);
+            mes.setGoogleActivityValue(value);
+            output.add(mes);
+        }
+//        Collections.sort(output); TODO
+        return output;
+    }
 
     public AllMeasurements()
     {
@@ -125,7 +226,7 @@ public class AllMeasurements
 
     public void setSteps(int steps)
     {
-       Steps = steps;
+        Steps = steps;
     }
 
     public HashMap<Long, Float> getLight()
@@ -193,9 +294,9 @@ public class AllMeasurements
         return GoogleActivity;
     }
 
-    public void setGoogleActivity(String googleActivityKey,  float googleActivityValue)
+    public void setGoogleActivity(String googleActivityKey, float googleActivityValue)
     {
-        GoogleActivity.put(googleActivityKey,  googleActivityValue);
+        GoogleActivity.put(googleActivityKey, googleActivityValue);
     }
 
     public pl.k13.allinfo.WifiMeasurement getWifiMeasurement()
@@ -222,7 +323,7 @@ public class AllMeasurements
     {
         String outputString = "";
         SortedSet<Long> keyList = new TreeSet<>(input.keySet());
-        for (Long key:keyList)
+        for (Long key : keyList)
         {
             outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
         }
@@ -233,7 +334,7 @@ public class AllMeasurements
     {
         String outputString = "";
         SortedSet<Long> keyList = new TreeSet<>(input.keySet());
-        for (Long key:keyList)
+        for (Long key : keyList)
         {
             outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
         }
@@ -244,7 +345,7 @@ public class AllMeasurements
     {
         String outputString = "";
         SortedSet<Long> keyList = new TreeSet<>(input.keySet());
-        for (Long key:keyList)
+        for (Long key : keyList)
         {
             outputString += "{" + key.toString() + "=" + input.get(key).toString() + "}, ";
         }

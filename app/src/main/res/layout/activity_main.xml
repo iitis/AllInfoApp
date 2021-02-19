@@ -45,7 +45,7 @@
                 android:id="@+id/radioButton2"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="W ręce" />
+                android:text="W rece" />
 
             <RadioButton
                 android:id="@+id/radioButton3"
@@ -90,7 +90,7 @@
                 android:id="@+id/radioButton5"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="Siedzi (ogólnie)" />
+                android:text="Siedzi (ogolnie)" />
 
             <RadioButton
                 android:id="@+id/radioButton10"
@@ -108,7 +108,7 @@
                 android:id="@+id/radioButton12"
                 android:layout_width="match_parent"
                 android:layout_height="40dp"
-                android:text="Idzie (ogólnie)" />
+                android:text="Idzie (ogolnie)" />
 
             <RadioButton
                 android:id="@+id/radioButton13"

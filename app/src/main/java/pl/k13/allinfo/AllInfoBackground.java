@@ -39,11 +39,17 @@ import androidx.core.app.ActivityCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -196,8 +202,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
         {
             readWifiInfo();
             readLteInfo();
-            savefile();
             someReadingsUpdate1000ms();
+            saveFile(); //ALWAYS savefile before sendPost!
+            sendPost();
         }
     }
 
@@ -265,62 +272,63 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     protected void sendPost()
     {
-//        List<WifiMeasurement> meslist = new ArrayList<>();
-//
-//        if ((meslist != null) && (!meslist.isEmpty()))
-//        {
-//            Thread thread = new Thread(new Runnable()
-//            {
-//                @Override
-//                public void run()
-//                {
-//                    try
-//                    {
-////                        URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
-//                        URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
-//                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-//                        conn.setRequestMethod("POST");
-//                        conn.setRequestProperty("accept", "*/*");
-////                        conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
-//                        conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
-//                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-//                        conn.setRequestProperty("Accept", "application/json");
-//
-//                        conn.setDoOutput(true);
-//                        conn.setDoInput(true);
-//
-//                        JSONArray jsonArray = new JSONArray();
-//                        for (WifiMeasurement wfm : meslist)
-//                        {
-//                            jsonArray.put(wfm.toJSONObject());
-//                        }
-//
-//                        JSONObject jsonCollection = new JSONObject();
-//                        jsonCollection.put("collection", jsonArray);
-//
-//                        Log.i("JSON", jsonCollection.toString());
-//                        DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-//                        os.writeBytes(jsonCollection.toString());
-//
-//                        os.flush();
-//                        os.close();
-//
-//                        Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-//                        Log.i("MSG", conn.getResponseMessage());
-//
-//                        conn.disconnect();
-//                    } catch (Exception e)
-//                    {
-//                        e.printStackTrace();
-//                    }
-//                }
-//            });
-//
-//            thread.start();
-//        }
+        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
+        {
+            Thread thread = new Thread(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    try
+                    {
+//                        URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
+                        URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
+                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                        conn.setRequestMethod("POST");
+                        conn.setRequestProperty("accept", "*/*");
+//                        conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
+                        conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
+                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+                        conn.setRequestProperty("Accept", "application/json");
+
+                        conn.setDoOutput(true);
+                        conn.setDoInput(true);
+
+                        JSONArray jsonArray = new JSONArray();
+                        if (allMeasurementsHashMap.containsKey(measureInit() - 1))
+                        {
+                            for (AllMeas2DB ent: allMeasurementsHashMap.get(measureInit() - 1).toAllMesList())
+                            {
+                                jsonArray.put(ent.toJSONObject());
+                            }
+                        }
+
+                        JSONObject jsonCollection = new JSONObject();
+                        jsonCollection.put("collection", jsonArray);
+
+                        Log.i("JSON", jsonCollection.toString());
+                        DataOutputStream os = new DataOutputStream(conn.getOutputStream());
+                        os.writeBytes(jsonCollection.toString());
+
+                        os.flush();
+                        os.close();
+
+                        Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                        Log.i("MSG", conn.getResponseMessage());
+
+                        conn.disconnect();
+                    } catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            thread.start();
+        }
     }
 
-    void savefile()
+    void saveFile()
     {
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
@@ -424,18 +432,17 @@ public class AllInfoBackground extends Service implements SensorEventListener
             }
         }, 0, 500);
 
-        timerSend = new Timer();
-        timerSend.scheduleAtFixedRate(new TimerTask()
-        {
-            @Override
-            public void run()
-            {
-                if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
-                {
-                    sendPost();
-                }
-            }
-        }, 0, 3000);
+//        timerSend = new Timer();
+//        timerSend.scheduleAtFixedRate(new TimerTask()
+//        {
+//            @Override
+//            public void run()
+//            {
+//                if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
+//                {
+//                }
+//            }
+//        }, 0, 1000);
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
 
@@ -493,8 +500,6 @@ public class AllInfoBackground extends Service implements SensorEventListener
             @Override
             public void onReceive(Context context, Intent intent)
             {
-                Toast.makeText(context, "cos przyszlo", Toast.LENGTH_LONG).show();
-
                 int type = intent.getIntExtra("type", -1);
                 int confidence = intent.getIntExtra("confidence", 0);
                 handleUserActivity(type, confidence);
@@ -549,12 +554,13 @@ public class AllInfoBackground extends Service implements SensorEventListener
         this.unregisterReceiver(angleBroadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityBroadcastReceiver);
 
-        timerMainTick.cancel();
-        timerSend.cancel();
-        timer500msTick.cancel();
+        if (timerMainTick!=null) timerMainTick.cancel();
+        if (timerSend!=null) timerSend.cancel();
+        if (timer500msTick!=null) timer500msTick.cancel();
+
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
-            savefile();
+            saveFile(); //ALWAYS savefile before sendPost!
             sendPost();
         }
         allMeasurementsHashMap.clear();
@@ -668,7 +674,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             }
         }
         Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setGoogleActivity(label, confidence);
-        Toast.makeText(getApplicationContext(), "Type: " + label + ", confidence: " + confidence, Toast.LENGTH_LONG).show();
+//        Toast.makeText(getApplicationContext(), "Type: " + label + ", confidence: " + confidence, Toast.LENGTH_LONG).show();
         Log.e(LOG_TAG, "User activity: " + label + ", Confidence: " + confidence);
     }
 
