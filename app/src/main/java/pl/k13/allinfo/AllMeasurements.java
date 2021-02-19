@@ -33,7 +33,28 @@ public class AllMeasurements
     private HashMap<String, Float> GoogleActivity;
     private WifiMeasurement WifiMeasurement;
     private LTECellInfo LTEMeasurement;
+    private boolean saved2file;
+    private boolean posted2db;
 
+    public boolean isSaved2file()
+    {
+        return saved2file;
+    }
+
+    public void setSaved2file(boolean saved2file)
+    {
+        this.saved2file = saved2file;
+    }
+
+    public boolean isPosted2db()
+    {
+        return posted2db;
+    }
+
+    public void setPosted2db(boolean posted2db)
+    {
+        this.posted2db = posted2db;
+    }
 
     public List<AllMeas2DB> toAllMesList() throws JSONException
     {
