@@ -148,13 +148,13 @@ public class AllInfoBackground extends Service implements SensorEventListener
     {
         switch (event.sensor.getType())
         {
-            case Sensor.TYPE_ACCELEROMETER: //TODO fix to 3 dim
+            case Sensor.TYPE_ACCELEROMETER:
                 Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addAccelerometer(event.values[0], event.values[1], event.values[2]);
                 System.arraycopy(event.values, 0, lastAccelerometer, 0, event.values.length);
                 accelerometerNotUsed = true;
                 getOrientation();
                 break;
-            case Sensor.TYPE_GYROSCOPE: //TODO fix to 3 dim
+            case Sensor.TYPE_GYROSCOPE:
                 Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addGyroscope(event.values[0], event.values[1], event.values[2]);
                 break;
             case Sensor.TYPE_MAGNETIC_FIELD:
@@ -203,7 +203,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             readWifiInfo();
             readLteInfo();
             someReadingsUpdate1000ms();
-            saveFile(); //ALWAYS savefile before sendPost!
+//            saveFile(); //ALWAYS savefile before sendPost!
             sendPost();
         }
     }
@@ -272,6 +272,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     protected void sendPost()
     {
+
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
             Thread thread = new Thread(new Runnable()
@@ -295,18 +296,18 @@ public class AllInfoBackground extends Service implements SensorEventListener
                         conn.setDoInput(true);
 
                         JSONArray jsonArray = new JSONArray();
-                        if (allMeasurementsHashMap.containsKey(measureInit() - 1))
+                        long timeKey = measureInit() - 1;
+                        if (allMeasurementsHashMap.containsKey(timeKey))
                         {
-                            for (AllMeas2DB ent: allMeasurementsHashMap.get(measureInit() - 1).toAllMesList())
+                            for (AllMeas2DB ent : allMeasurementsHashMap.get(timeKey).toAllMesList())
                             {
                                 jsonArray.put(ent.toJSONObject());
                             }
                         }
-
+                        saveFile(jsonArray);
                         JSONObject jsonCollection = new JSONObject();
                         jsonCollection.put("collection", jsonArray);
-
-                        Log.i("JSON", jsonCollection.toString());
+//                        Log.i("JSON", jsonCollection.toString());
                         DataOutputStream os = new DataOutputStream(conn.getOutputStream());
                         os.writeBytes(jsonCollection.toString());
 
@@ -315,6 +316,10 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
                         Log.i("STATUS", String.valueOf(conn.getResponseCode()));
                         Log.i("MSG", conn.getResponseMessage());
+                        if (conn.getResponseCode() == 201)
+                        {
+                            allMeasurementsHashMap.remove(timeKey);
+                        }
 
                         conn.disconnect();
                     } catch (Exception e)
@@ -328,61 +333,114 @@ public class AllInfoBackground extends Service implements SensorEventListener
         }
     }
 
-    void saveFile()
+    void saveFile(JSONArray json)
     {
-        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
+        try
         {
-            Thread thread = new Thread(new Runnable()
+            BufferedOutputStream bos = null;
+            @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
+            Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
+            File dir = new File(getExternalFilesDir(null).getAbsolutePath());
+            File[] filesInDir = dir.listFiles();
+            for (File f : filesInDir)  //deletes older files
             {
-                @Override
-                public void run()
+                if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
                 {
-                    try
-                    {
-                        BufferedOutputStream bos = null;
-                        @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
-                        Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
-                        File dir = new File(getExternalFilesDir(null).getAbsolutePath());
-                        File[] filesInDir = dir.listFiles();
-                        for (File f : filesInDir)  //deletes older files
-                        {
-                            if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
-                            {
-                                if (f.delete())
-                                    Log.d(LOG_TAG, "Deleted");
-                            }
-                        }
-                        try
-                        {
-                            bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
-                            if (allMeasurementsHashMap.containsKey(measureInit() - 1))
-                            {
-                                bos.write(allMeasurementsHashMap.get(measureInit() - 1).toString().getBytes());
-                                bos.write("\n".getBytes());
-                                Log.d(LOG_TAG, "File saved");
-                            }
-                        } catch (IOException e)
-                        {
-                            e.printStackTrace();
-                        } finally
-                        {
-                            try
-                            {
-                                if (bos != null) bos.close();
-                            } catch (IOException e)
-                            {
-                                e.printStackTrace();
-                            }
-                        }
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
-                    }
+                    if (f.delete())
+                        Log.d(LOG_TAG, "Deleted");
                 }
-            });
-            thread.start();
+            }
+            try
+            {
+                bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
+                bos.write(json.toString().getBytes());
+                bos.write("\n".getBytes());
+                Log.d(LOG_TAG, "File saved");
+            } catch (IOException e)
+            {
+                e.printStackTrace();
+            } finally
+            {
+                try
+                {
+                    if (bos != null) bos.close();
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e)
+        {
+            e.printStackTrace();
         }
     }
+
+//    void saveFile()
+//    {
+//        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
+//        {
+//            Thread thread = new Thread(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
+//                    try
+//                    {
+//                        BufferedOutputStream bos = null;
+//                        @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
+//                        Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
+//                        File dir = new File(getExternalFilesDir(null).getAbsolutePath());
+//                        File[] filesInDir = dir.listFiles();
+//                        for (File f : filesInDir)  //deletes older files
+//                        {
+//                            if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
+//                            {
+//                                if (f.delete())
+//                                    Log.d(LOG_TAG, "Deleted");
+//                            }
+//                        }
+//                        try
+//                        {
+//                            bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
+////                            if (allMeasurementsHashMap.containsKey(measureInit() - 1))
+////                            {
+////                                bos.write(allMeasurementsHashMap.get(measureInit() - 1).toString().getBytes());
+////                                bos.write("\n".getBytes());
+////                                Log.d(LOG_TAG, "File saved");
+////                            }
+//                            JSONArray jsonArray = new JSONArray();
+//                            if (allMeasurementsHashMap.containsKey(measureInit() - 1))
+//                            {
+//                                for (AllMeas2DB ent : allMeasurementsHashMap.get(measureInit() - 1).toAllMesListFILE())
+//                                {
+//                                    jsonArray.put(ent.toJSONObject());
+//                                }
+//                            }
+//                            bos.write(jsonArray.toString().getBytes());
+//                            bos.write("\n".getBytes());
+//                            Log.d(LOG_TAG, "File saved");
+//                        } catch (IOException e)
+//                        {
+//                            e.printStackTrace();
+//                        } finally
+//                        {
+//                            try
+//                            {
+//                                if (bos != null) bos.close();
+//                            } catch (IOException e)
+//                            {
+//                                e.printStackTrace();
+//                            }
+//                        }
+//                    } catch (Exception e)
+//                    {
+//                        e.printStackTrace();
+//                    }
+//                }
+//            });
+//            thread.start();
+//        }
+//    }
 
     @Override
     public void onCreate()
@@ -554,13 +612,12 @@ public class AllInfoBackground extends Service implements SensorEventListener
         this.unregisterReceiver(angleBroadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityBroadcastReceiver);
 
-        if (timerMainTick!=null) timerMainTick.cancel();
-        if (timerSend!=null) timerSend.cancel();
-        if (timer500msTick!=null) timer500msTick.cancel();
+        if (timerMainTick != null) timerMainTick.cancel();
+        if (timerSend != null) timerSend.cancel();
+        if (timer500msTick != null) timer500msTick.cancel();
 
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
-            saveFile(); //ALWAYS savefile before sendPost!
             sendPost();
         }
         allMeasurementsHashMap.clear();

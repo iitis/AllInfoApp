@@ -69,7 +69,8 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     }
 
     @Override
-    public int compareTo(AllMeas2DB u) {
+    public int compareTo(AllMeas2DB u)
+    {
         return this.timestamp.compareTo(u.getTimestamp());
     }
 
@@ -103,7 +104,8 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.motion != 0.0f) data.put("motion", this.motion);
         if (this.significantMotion != 0.0f) data.put("significantMotion", this.significantMotion);
         if (this.googleActivityType != "") data.put("googleActivityType", this.googleActivityType);
-        if (this.googleActivityValue != 0.0f) data.put("googleActivityValue", this.googleActivityValue);
+        if (this.googleActivityValue != 0.0f)
+            data.put("googleActivityValue", this.googleActivityValue);
         if (this.wifiName != "") data.put("wifiName", this.wifiName);
         if (this.wifiRssi != -255) data.put("wifiRssi", this.wifiRssi);
         if (this.wifiOther != "") data.put("wifiOther", this.wifiOther);

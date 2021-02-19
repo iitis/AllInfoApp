@@ -38,6 +38,7 @@ public class AllMeasurements
     public List<AllMeas2DB> toAllMesList() throws JSONException
     {
         List<AllMeas2DB> output = new ArrayList<>();
+
         AllMeas2DB m = new AllMeas2DB(this.Timestamp, this.ExperimentId, this.DeviceId);
         m.setExperimentId(this.ExperimentId);
         m.setDeviceId(this.DeviceId);
@@ -52,41 +53,50 @@ public class AllMeasurements
         m.setWifiOther(this.WifiMeasurement.getBssid() + ", " + this.WifiMeasurement.getAngle());
         m.setLteRssi(this.LTEMeasurement.getSS_Rsrp());
         m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
-        Log.d("TOALLMES", m.toJSONObject().toString());
+        m.setOther("general");
         output.add(m);
 
-//        for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
-//        {
-//            Long key = entry.getKey();
-//            FloatXYZ value = entry.getValue();
-//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
-//            mes.setAccelerometerX(value.getX());
-//            mes.setAccelerometerY(value.getY());
-//            mes.setAccelerometerZ(value.getZ());
-//            output.add(mes);
-//        }
-//
-//        for (Map.Entry<Long, FloatXYZ> entry : Gyroscope.entrySet())
-//        {
-//            Long key = entry.getKey();
-//            FloatXYZ value = entry.getValue();
-//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
-//            mes.setGyroscopeX(value.getX());
-//            mes.setGyroscopeY(value.getY());
-//            mes.setGyroscopeZ(value.getZ());
-//            output.add(mes);
-//        }
-//
-//        for (Map.Entry<Long, FloatXYZ> entry : Orientation.entrySet())
-//        {
-//            Long key = entry.getKey();
-//            FloatXYZ value = entry.getValue();
-//            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
-//            mes.setOrientationX(value.getX());
-//            mes.setOrientationY(value.getY());
-//            mes.setOrientationZ(value.getZ());
-//            output.add(mes);
-//        }
+        for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
+        {
+            Long key = entry.getKey();
+            FloatXYZ value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setAccelerometerX(value.getX());
+            mes.setAccelerometerY(value.getY());
+            mes.setAccelerometerZ(value.getZ());
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("accelerometer");
+            output.add(mes);
+        }
+
+        for (Map.Entry<Long, FloatXYZ> entry : Gyroscope.entrySet())
+        {
+            Long key = entry.getKey();
+            FloatXYZ value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setGyroscopeX(value.getX());
+            mes.setGyroscopeY(value.getY());
+            mes.setGyroscopeZ(value.getZ());
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("gyroscope");
+            output.add(mes);
+        }
+
+        for (Map.Entry<Long, FloatXYZ> entry : Orientation.entrySet())
+        {
+            Long key = entry.getKey();
+            FloatXYZ value = entry.getValue();
+            AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
+            mes.setOrientationX(value.getX());
+            mes.setOrientationY(value.getY());
+            mes.setOrientationZ(value.getZ());
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("orientation");
+            output.add(mes);
+        }
 
         for (Map.Entry<Long, Float> entry : Light.entrySet())
         {
@@ -94,6 +104,9 @@ public class AllMeasurements
             Float value = entry.getValue();
             AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
             mes.setLight(value);
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("light");
             output.add(mes);
         }
 
@@ -103,6 +116,9 @@ public class AllMeasurements
             Boolean value = entry.getValue();
             AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
             mes.setScreenOn(value);
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("screen");
             output.add(mes);
         }
 
@@ -112,6 +128,9 @@ public class AllMeasurements
             Float value = entry.getValue();
             AllMeas2DB mes = new AllMeas2DB(key, this.ExperimentId, this.DeviceId);
             mes.setProximity(value);
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("proximity");
             output.add(mes);
         }
 
@@ -122,11 +141,15 @@ public class AllMeasurements
             AllMeas2DB mes = new AllMeas2DB(this.Timestamp, this.ExperimentId, this.DeviceId);
             mes.setGoogleActivityType(key);
             mes.setGoogleActivityValue(value);
+            mes.setUserMotion(this.UserMotion);
+            mes.setuserPhoneLocation(this.UserPhoneLocation);
+            mes.setOther("googleactivity");
             output.add(mes);
         }
 //        Collections.sort(output); TODO
         return output;
     }
+
 
     public AllMeasurements()
     {

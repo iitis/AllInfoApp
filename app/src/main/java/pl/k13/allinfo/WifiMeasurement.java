@@ -105,8 +105,8 @@ public class WifiMeasurement implements Parcelable
     public String toString()
     {
         return "{" +
-                "bssid='" + bssid + '\'' +
-                ", ssid='" + ssid + '\'' +
+                "bssid=" + bssid  +
+                ", ssid=" + ssid +
                 ", rssi=" + rssi +
                 ", angle=" + angle +
                 '}';

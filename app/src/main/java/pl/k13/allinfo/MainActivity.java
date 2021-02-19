@@ -47,8 +47,8 @@ public class MainActivity extends AppCompatActivity
     SharedPreferences sharedpreferences;
     private static final String STREXPID = "ExperimentID";
     public static String ExperimentID = "ExperimentID";
-    public static String stringUserPhoneLocation = "";
-    public static String stringUserMotion = "";
+    public static String stringUserPhoneLocation = "notset";
+    public static String stringUserMotion = "notset";
 
 
     @Override
