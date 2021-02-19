@@ -205,6 +205,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             readWifiInfo();
             readLteInfo();
             someReadingsUpdate1000ms();
+            saveFile();
         }
     }
 
@@ -308,7 +309,6 @@ public class AllInfoBackground extends Service implements SensorEventListener
                                     Log.i("REMOVED", "Key: " + key);
                                 } else
                                 {
-                                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
                                     JSONArray jsonArray = new JSONArray();
                                     if (allMeasurementsHashMap.containsKey(key))
                                     {
@@ -320,18 +320,20 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
                                     JSONObject jsonCollection = new JSONObject();
                                     jsonCollection.put("collection", jsonArray);
+                                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
                                     os.writeBytes(jsonCollection.toString());
-
-                                    if (conn.getResponseCode() == 201)
-                                        allMeasurementsHashMap.get(key).setPosted2db(true);
-
-                                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                                    Log.i("MSG", conn.getResponseMessage());
                                     os.flush();
                                     os.close();
+                                    if (conn.getResponseCode() == 201) //TODO
+                                        allMeasurementsHashMap.get(key).setPosted2db(true);
+//
+//                                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+//                                    Log.i("MSG", conn.getResponseMessage());
+
                                 }
                             }
                         }
+
                         conn.disconnect();
                     } catch (Exception e)
                     {
@@ -342,51 +344,6 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
             thread.start();
         }
-    }
-
-    boolean saveFile(JSONArray json)
-    {
-        boolean result = false;
-        try
-        {
-            BufferedOutputStream bos = null;
-            @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
-            Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
-            File dir = new File(getExternalFilesDir(null).getAbsolutePath());
-            File[] filesInDir = dir.listFiles();
-            for (File f : filesInDir)  //deletes older files
-            {
-                if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
-                {
-                    if (f.delete())
-                        Log.d(LOG_TAG, "Deleted");
-                }
-            }
-            try
-            {
-                bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
-                bos.write(json.toString().getBytes());
-                bos.write("\n".getBytes());
-                Log.d(LOG_TAG, "File saved");
-                result = true;
-            } catch (IOException e)
-            {
-                e.printStackTrace();
-            } finally
-            {
-                try
-                {
-                    if (bos != null) bos.close();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
-            }
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        return result;
     }
 
     void saveFile()
