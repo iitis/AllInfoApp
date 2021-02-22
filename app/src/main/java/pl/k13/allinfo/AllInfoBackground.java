@@ -40,13 +40,19 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
@@ -58,6 +64,7 @@ import java.util.SortedSet;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeSet;
+import java.util.zip.GZIPOutputStream;
 
 import static java.lang.Math.round;
 import static pl.k13.allinfo.MainActivity.ExperimentID;
@@ -270,79 +277,83 @@ public class AllInfoBackground extends Service implements SensorEventListener
         allMeasurementsHashMap.get(measureInit()).setLTEMeasurement(lte);
     }
 
+    private HttpURLConnection prepareConnection()
+    {
+        try
+        {
+//            URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
+            URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
+            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+            conn.setRequestMethod("POST");
+            conn.setRequestProperty("accept", "*/*");
+//            conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
+            conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
+            conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+//            conn.setRequestProperty("Accept-Encoding", "gzip");
+            conn.setRequestProperty("Accept", "application/json");
+            conn.setDoOutput(true);
+            conn.setDoInput(true);
+            conn.setChunkedStreamingMode(0);
+            return conn;
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
     protected void sendPost()
     {
-
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
-            Thread thread = new Thread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
-                    try
+//            Thread thread = new Thread(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
+                    long currentTimeKey = measureInit();
+                    SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
+                    for (Long key : keyList)
                     {
-//                        URL url = new URL("https://bacon-train-prod.api.meetlify.com/all-measurements");
-                        URL url = new URL("https://bacon-train-dev.api.meetlify.com/all-measurements");
-                        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                        conn.setRequestMethod("POST");
-                        conn.setRequestProperty("accept", "*/*");
-//                        conn.setRequestProperty("api-key", "644453aeaf475fc95c422714a807d68prod");
-                        conn.setRequestProperty("api-key", "3d8c2f28f51645a66479b85d88c7050cdev");
-                        conn.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-                        conn.setRequestProperty("Accept", "application/json");
-
-                        conn.setDoOutput(true);
-                        conn.setDoInput(true);
-
-                        long timeKey = measureInit();
-
-                        SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
-                        for (Long key : keyList)
+                        if (key != currentTimeKey)
                         {
-                            if (key != timeKey)
+                            if (Objects.requireNonNull(allMeasurementsHashMap.get(key)).isSaved2file() && Objects.requireNonNull(allMeasurementsHashMap.get(key)).isPosted2db())
                             {
-                                if (allMeasurementsHashMap.get(key).isSaved2file() && allMeasurementsHashMap.get(key).isPosted2db())
+                                allMeasurementsHashMap.remove(key);
+//                                Log.i("REMOVED", "Key: " + key);
+                            } else
+                            {
+                                try
                                 {
-                                    allMeasurementsHashMap.remove(key);
-                                    Log.i("REMOVED", "Key: " + key);
-                                } else
-                                {
+//                                    Log.d("NOWY ZAPIS DO bAZY", key.toString());
                                     JSONArray jsonArray = new JSONArray();
                                     if (allMeasurementsHashMap.containsKey(key))
-                                    {
                                         for (AllMeas2DB ent : allMeasurementsHashMap.get(key).toAllMesList())
-                                        {
                                             jsonArray.put(ent.toJSONObject());
-                                        }
-                                    }
-
                                     JSONObject jsonCollection = new JSONObject();
                                     jsonCollection.put("collection", jsonArray);
-                                    DataOutputStream os = new DataOutputStream(conn.getOutputStream());
-                                    os.writeBytes(jsonCollection.toString());
+                                    HttpURLConnection conn = prepareConnection();
+                                    OutputStream os = new BufferedOutputStream(conn.getOutputStream());
+//                                    GZIPOutputStream os = new GZIPOutputStream(conn.getOutputStream());
+                                    os.write(jsonCollection.toString().getBytes());
                                     os.flush();
                                     os.close();
-                                    if (conn.getResponseCode() == 201) //TODO
-                                        allMeasurementsHashMap.get(key).setPosted2db(true);
-//
-//                                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-//                                    Log.i("MSG", conn.getResponseMessage());
-
+                                    if (conn.getResponseCode() == 201)
+                                        if (allMeasurementsHashMap.get(key) != null)
+                                            Objects.requireNonNull(allMeasurementsHashMap.get(key)).setPosted2db(true);
+                                    conn.disconnect();
+                                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                                    Log.i("MSG", conn.getResponseMessage());
+                                } catch (JSONException | IOException e)
+                                {
+                                    e.printStackTrace();
                                 }
                             }
                         }
-
-                        conn.disconnect();
-                    } catch (Exception e)
-                    {
-                        e.printStackTrace();
                     }
-                }
-            });
-
-            thread.start();
+//                }
+//            });
+//            thread.start();
         }
     }
 
@@ -350,11 +361,11 @@ public class AllInfoBackground extends Service implements SensorEventListener
     {
         if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
         {
-            Thread thread = new Thread(new Runnable()
-            {
-                @Override
-                public void run()
-                {
+//            Thread thread = new Thread(new Runnable()
+//            {
+//                @Override
+//                public void run()
+//                {
                     try
                     {
                         BufferedOutputStream bos = null;
@@ -410,9 +421,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
                     {
                         e.printStackTrace();
                     }
-                }
-            });
-            thread.start();
+//                }
+//            });
+//            thread.start();
         }
     }
 
@@ -590,11 +601,12 @@ public class AllInfoBackground extends Service implements SensorEventListener
         if (timerPosting != null) timerPosting.cancel();
         if (timer500msTick != null) timer500msTick.cancel();
 
-        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
-        {
-            sendPost();
-        }
-        allMeasurementsHashMap.clear();
+//        if ((allMeasurementsHashMap != null) && (!allMeasurementsHashMap.isEmpty()))
+//        {
+////            sendPost();
+//            allMeasurementsHashMap.clear();
+//        }
+
         removeActivityUpdatesButtonHandler();
         Toast.makeText(this, "Zapis zatrzymany", Toast.LENGTH_SHORT).show();
     }

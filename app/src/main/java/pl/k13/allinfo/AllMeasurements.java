@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+import pl.k13.allinfo.AllMeas2DB.Modes;
 
 public class AllMeasurements
 {
@@ -74,7 +75,7 @@ public class AllMeasurements
         m.setWifiOther(this.WifiMeasurement.getBssid() + ", " + this.WifiMeasurement.getAngle());
         m.setLteRssi(this.LTEMeasurement.getSS_Rsrp());
         m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
-        m.setOther("general");
+        m.setOther(Modes.GENERAL);
         output.add(m);
 
         for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
@@ -87,7 +88,7 @@ public class AllMeasurements
             mes.setAccelerometerZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("accelerometer");
+            mes.setOther(Modes.ACCELEROMETER);
             output.add(mes);
         }
 
@@ -101,7 +102,7 @@ public class AllMeasurements
             mes.setGyroscopeZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("gyroscope");
+            mes.setOther(Modes.GYROSCOPE);
             output.add(mes);
         }
 
@@ -115,7 +116,7 @@ public class AllMeasurements
             mes.setOrientationZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("orientation");
+            mes.setOther(Modes.ORIENTATION);
             output.add(mes);
         }
 
@@ -127,7 +128,7 @@ public class AllMeasurements
             mes.setLight(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("light");
+            mes.setOther(Modes.LIGHT);
             output.add(mes);
         }
 
@@ -139,7 +140,7 @@ public class AllMeasurements
             mes.setScreenOn(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("screen");
+            mes.setOther(Modes.SCREEN);
             output.add(mes);
         }
 
@@ -151,7 +152,7 @@ public class AllMeasurements
             mes.setProximity(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("proximity");
+            mes.setOther(Modes.PROXIMITY);
             output.add(mes);
         }
 
@@ -164,7 +165,7 @@ public class AllMeasurements
             mes.setGoogleActivityValue(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther("googleactivity");
+            mes.setOther(Modes.GOOGLEACTIVITY);
             output.add(mes);
         }
 //        Collections.sort(output); TODO

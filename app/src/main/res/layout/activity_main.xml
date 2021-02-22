@@ -70,6 +70,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="W nerce" />
+
+            <RadioButton
+                android:id="@+id/radioButton9"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Na stoliku" />
         </RadioGroup>
 
         <RadioGroup
@@ -83,68 +89,74 @@
         <RadioButton
                 android:id="@+id/radioButton4"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Stoi" />
 
             <RadioButton
                 android:id="@+id/radioButton5"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Siedzi (ogolnie)" />
 
             <RadioButton
                 android:id="@+id/radioButton10"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Siedzi (stoliki/hokery)" />
 
             <RadioButton
                 android:id="@+id/radioButton11"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Siedzi (pufa/sofa)" />
 
             <RadioButton
                 android:id="@+id/radioButton12"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Idzie (ogolnie)" />
 
             <RadioButton
                 android:id="@+id/radioButton13"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Idzie powoli" />
 
             <RadioButton
                 android:id="@+id/radioButton14"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Idzie normalnie" />
 
             <RadioButton
                 android:id="@+id/radioButton15"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Idzie szybko" />
 
             <RadioButton
                 android:id="@+id/radioButton16"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Idzie po schodach" />
 
             <RadioButton
                 android:id="@+id/radioButton17"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Bieganie" />
 
             <RadioButton
                 android:id="@+id/radioButton18"
                 android:layout_width="match_parent"
-                android:layout_height="40dp"
+                android:layout_height="30dp"
                 android:text="Winda/schody ruchome" />
+
+            <RadioButton
+                android:id="@+id/radioButton19"
+                android:layout_width="match_parent"
+                android:layout_height="30dp"
+                android:text="Lezy" />
         </RadioGroup>
 
     </LinearLayout>

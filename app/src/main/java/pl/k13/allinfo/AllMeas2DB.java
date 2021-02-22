@@ -35,6 +35,18 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     private String lteOther;
     private String other;
 
+    public interface Modes
+    {
+        String ACCELEROMETER = "accelerometer";
+        String GENERAL = "general";
+        String GYROSCOPE = "gyroscope";
+        String ORIENTATION = "orientation";
+        String LIGHT = "light";
+        String SCREEN = "screen";
+        String PROXIMITY = "proximity";
+        String GOOGLEACTIVITY = "googleactivity";
+    }
+
     public AllMeas2DB(Long timestamp, String experimentId, String deviceId)
     {
         this.experimentId = experimentId;
@@ -87,30 +99,31 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.userMotion != "") data.put("userMotion", this.userMotion);
         if (this.userPhoneLocation != "") data.put("userPhoneLocation", this.userPhoneLocation);
         data.put("timestamp", this.timestamp);
-        if (this.accelerometerX != 0.0f) data.put("accelerometerX", this.accelerometerX);
-        if (this.accelerometerY != 0.0f) data.put("accelerometerY", this.accelerometerY);
-        if (this.accelerometerZ != 0.0f) data.put("accelerometerZ", this.accelerometerZ);
-        if (this.gyroscopeX != 0.0f) data.put("gyroscopeX", this.gyroscopeX);
-        if (this.gyroscopeY != 0.0f) data.put("gyroscopeY", this.gyroscopeY);
-        if (this.gyroscopeZ != 0.0f) data.put("gyroscopeZ", this.gyroscopeZ);
-        if (this.orientationX != 0.0f) data.put("orientationX", this.orientationX);
-        if (this.orientationY != 0.0f) data.put("orientationY", this.orientationY);
-        if (this.orientationZ != 0.0f) data.put("orientationZ", this.orientationZ);
-        if (this.steps != 0.0f) data.put("steps", this.steps);
-        if (this.light != 0.0f) data.put("light", this.light);
-        data.put("screenOn", this.screenOn);
-        if (this.proximity != 0.0f) data.put("proximity", this.proximity);
-        if (this.stationary != 0.0f) data.put("stationary", this.stationary);
-        if (this.motion != 0.0f) data.put("motion", this.motion);
-        if (this.significantMotion != 0.0f) data.put("significantMotion", this.significantMotion);
-        if (this.googleActivityType != "") data.put("googleActivityType", this.googleActivityType);
-        if (this.googleActivityValue != 0.0f)
+        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerX", this.accelerometerX);
+        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerY", this.accelerometerY);
+        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerZ", this.accelerometerZ);
+        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeX", this.gyroscopeX);
+        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeY", this.gyroscopeY);
+        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeZ", this.gyroscopeZ);
+        if (this.other == Modes.ORIENTATION) data.put("orientationX", this.orientationX);
+        if (this.other == Modes.ORIENTATION) data.put("orientationY", this.orientationY);
+        if (this.other == Modes.ORIENTATION) data.put("orientationZ", this.orientationZ);
+        if (this.other == Modes.GENERAL) data.put("steps", this.steps);
+        if (this.other == Modes.LIGHT) data.put("light", this.light);
+        if (this.other == Modes.SCREEN) data.put("screenOn", this.screenOn);
+        if (this.other == Modes.PROXIMITY) data.put("proximity", this.proximity);
+        if (this.other == Modes.GENERAL) data.put("stationary", this.stationary);
+        if (this.other == Modes.GENERAL) data.put("motion", this.motion);
+        if (this.other == Modes.GENERAL) data.put("significantMotion", this.significantMotion);
+        if (this.other == Modes.GOOGLEACTIVITY)
+            data.put("googleActivityType", this.googleActivityType);
+        if (this.other == Modes.GOOGLEACTIVITY)
             data.put("googleActivityValue", this.googleActivityValue);
-        if (this.wifiName != "") data.put("wifiName", this.wifiName);
-        if (this.wifiRssi != -255) data.put("wifiRssi", this.wifiRssi);
-        if (this.wifiOther != "") data.put("wifiOther", this.wifiOther);
-        if (this.lteRssi != -255) data.put("lteRssi", this.lteRssi);
-        if (this.lteOther != "") data.put("lteOther", this.lteOther);
+        if (this.other == Modes.GENERAL) data.put("wifiName", this.wifiName);
+        if (this.other == Modes.GENERAL) data.put("wifiRssi", this.wifiRssi);
+        if (this.other == Modes.GENERAL) data.put("wifiOther", this.wifiOther);
+        if (this.other == Modes.GENERAL) data.put("lteRssi", this.lteRssi);
+        if (this.other == Modes.GENERAL) data.put("lteOther", this.lteOther);
         if (this.other != "") data.put("other", this.other);
         return data;
     }
