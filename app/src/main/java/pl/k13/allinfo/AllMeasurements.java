@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
 import pl.k13.allinfo.AllMeas2DB.Modes;
 
 public class AllMeasurements
@@ -25,6 +26,7 @@ public class AllMeasurements
     private HashMap<Long, FloatXYZ> Gyroscope;
     private HashMap<Long, FloatXYZ> Orientation;
     private int Steps;
+    private float Battery;
     private HashMap<Long, Float> Light;
     private HashMap<Long, Boolean> ScreenOn;
     private HashMap<Long, Float> Proximity;
@@ -77,6 +79,18 @@ public class AllMeasurements
         m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
         m.setOther(Modes.GENERAL);
         output.add(m);
+
+        if (this.Battery > -1)
+        {
+            AllMeas2DB b = new AllMeas2DB(this.Timestamp, this.ExperimentId, this.DeviceId);
+            b.setExperimentId(this.ExperimentId);
+            b.setDeviceId(this.DeviceId);
+            b.setUserMotion(this.UserMotion);
+            b.setuserPhoneLocation(this.UserPhoneLocation);
+            b.setBattery(this.Battery);
+            b.setOther(Modes.BATTERY);
+            output.add(b);
+        }
 
         for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
         {
@@ -178,6 +192,7 @@ public class AllMeasurements
         Accelerometer = new HashMap<>();
         Gyroscope = new HashMap<>();
         Orientation = new HashMap<>();
+        Battery = -1.0f;
         Light = new HashMap<>();
         ScreenOn = new HashMap<>();
         Proximity = new HashMap<>();
@@ -262,6 +277,16 @@ public class AllMeasurements
     public void addOrientation(float orientationAzimuth, float orientationPitch, float orientationRoll)
     {
         Orientation.put(System.currentTimeMillis(), new FloatXYZ(orientationAzimuth, orientationPitch, orientationRoll));
+    }
+
+    public float getBattery()
+    {
+        return Battery;
+    }
+
+    public void setBattery(float battery)
+    {
+        Battery = battery;
     }
 
     public int getSteps()
@@ -407,6 +432,7 @@ public class AllMeasurements
                 ", UserPhoneLocation='" + UserPhoneLocation + '\'' +
                 ", UserMotion='" + UserMotion + '\'' +
                 ", Steps=" + Steps +
+                ", Battery=" + Battery +
                 ", Light=" + formatListByTimeF(Light) +
                 ", ScreenOn=" + formatListByTimeB(ScreenOn) +
                 ", Proximity=" + formatListByTimeF(Proximity) +

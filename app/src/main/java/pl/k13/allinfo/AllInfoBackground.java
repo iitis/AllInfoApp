@@ -18,6 +18,7 @@ import android.hardware.display.DisplayManager;
 import android.icu.text.SimpleDateFormat;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Handler;
@@ -103,6 +104,8 @@ public class AllInfoBackground extends Service implements SensorEventListener
     private int lastAngle = -360;
     BroadcastReceiver activityBroadcastReceiver;
     BroadcastReceiver angleBroadcastReceiver;
+    BroadcastReceiver batteryBroadcastReceiver;
+
 
 
     private float[] lastAccelerometer = new float[3];
@@ -537,6 +540,20 @@ public class AllInfoBackground extends Service implements SensorEventListener
         };
         this.registerReceiver(angleBroadcastReceiver, new IntentFilter("pl.k13.wifiinfo.Broadcast"));
 
+        batteryBroadcastReceiver = new BroadcastReceiver()
+        {
+            @Override
+            public void onReceive(Context context, Intent intent)
+            {
+                int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+                float batteryPct = level * 100 / (float)scale;
+                allMeasurementsHashMap.get(measureInit()).setBattery(batteryPct);
+            }
+        };
+
+        this.registerReceiver(batteryBroadcastReceiver, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
+
 
         activityBroadcastReceiver = new BroadcastReceiver()
         {
@@ -595,6 +612,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             sensorManager.unregisterListener(this, motionDetectSensor);
 
         this.unregisterReceiver(angleBroadcastReceiver);
+        this.unregisterReceiver(batteryBroadcastReceiver);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(activityBroadcastReceiver);
 
         if (timerMainTick != null) timerMainTick.cancel();

@@ -21,6 +21,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     private Float orientationZ;
     private Integer steps;
     private Float light;
+    private Float battery;
     private Boolean screenOn;
     private Float proximity;
     private Float stationary;
@@ -45,6 +46,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         String SCREEN = "screen";
         String PROXIMITY = "proximity";
         String GOOGLEACTIVITY = "googleactivity";
+        String BATTERY = "battery";
     }
 
     public AllMeas2DB(Long timestamp, String experimentId, String deviceId)
@@ -65,6 +67,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         this.orientationZ = 0.0f;
         this.steps = 0;
         this.light = 0.0f;
+        this.battery = -1.0f;
         this.screenOn = false;
         this.proximity = 0.0f;
         this.stationary = 0.0f;
@@ -124,7 +127,8 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.other == Modes.GENERAL) data.put("wifiOther", this.wifiOther);
         if (this.other == Modes.GENERAL) data.put("lteRssi", this.lteRssi);
         if (this.other == Modes.GENERAL) data.put("lteOther", this.lteOther);
-        if (this.other != "") data.put("other", this.other);
+        if (this.other == Modes.BATTERY) data.put("other", this.other + ", " + this.battery.toString());
+        else if (this.other != "") data.put("other", this.other);
         return data;
     }
 
@@ -201,6 +205,11 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     public void setSteps(Integer steps)
     {
         this.steps = steps;
+    }
+
+    public void setBattery(Float battery)
+    {
+        this.battery = battery;
     }
 
     public void setLight(Float light)
