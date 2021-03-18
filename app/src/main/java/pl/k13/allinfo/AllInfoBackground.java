@@ -99,6 +99,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
     private Sensor stationaryDetectSensor;
     private Sensor motionDetectSensor;
     private Sensor significantMotionSensor;
+    private Sensor pressureSensor;
     HashMap<Long, AllMeasurements> allMeasurementsHashMap = new HashMap<>();
     private final String deviceId = android.os.Build.MODEL; //android.os.Build.MANUFACTURER + android.os.Build.PRODUCT
     private int lastAngle = -360;
@@ -176,6 +177,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
                 break;
             case Sensor.TYPE_STEP_COUNTER:
                 Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setSteps((int) event.values[0]);
+                break;
+            case Sensor.TYPE_PRESSURE:
+                Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setPressure(event.values[0]);
                 break;
             case Sensor.TYPE_LIGHT:
                 Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).addLight(event.values[0]);
@@ -516,6 +520,10 @@ public class AllInfoBackground extends Service implements SensorEventListener
         if (proximitySensor != null)
             sensorManager.registerListener(this, proximitySensor, 250000);
 
+        pressureSensor = sensorManager.getDefaultSensor(Sensor.TYPE_PRESSURE);
+        if (pressureSensor != null)
+            sensorManager.registerListener(this, pressureSensor, 500000);
+
         stationaryDetectSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STATIONARY_DETECT);
         if (stationaryDetectSensor != null)
             sensorManager.registerListener(this, stationaryDetectSensor, 1000000);
@@ -602,6 +610,8 @@ public class AllInfoBackground extends Service implements SensorEventListener
             sensorManager.unregisterListener(this, lightSensor);
         if (proximitySensor != null)
             sensorManager.unregisterListener(this, proximitySensor);
+        if (pressureSensor != null)
+            sensorManager.unregisterListener(this, pressureSensor);
         if (stationaryDetectSensor != null)
             sensorManager.unregisterListener(this, stationaryDetectSensor);
         if (stepCountSensor != null)

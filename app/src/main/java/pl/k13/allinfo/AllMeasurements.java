@@ -27,6 +27,7 @@ public class AllMeasurements
     private HashMap<Long, FloatXYZ> Orientation;
     private int Steps;
     private float Battery;
+    private float Pressure;
     private HashMap<Long, Float> Light;
     private HashMap<Long, Boolean> ScreenOn;
     private HashMap<Long, Float> Proximity;
@@ -71,13 +72,14 @@ public class AllMeasurements
         m.setSteps(this.Steps);
         m.setStationary(this.Stationary);
         m.setMotion(this.Motion);
+        m.setPressure(this.Pressure);
         m.setSignificantMotion(this.SignificantMotion);
         m.setWifiName(this.WifiMeasurement.getSsid());
         m.setWifiRssi(this.WifiMeasurement.getRssi());
         m.setWifiOther(this.WifiMeasurement.getBssid() + ", " + this.WifiMeasurement.getAngle());
         m.setLteRssi(this.LTEMeasurement.getSS_Rsrp());
         m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
-        m.setOther(Modes.GENERAL);
+        m.setType(Modes.GENERAL);
         output.add(m);
 
         if (this.Battery > -1)
@@ -88,9 +90,10 @@ public class AllMeasurements
             b.setUserMotion(this.UserMotion);
             b.setuserPhoneLocation(this.UserPhoneLocation);
             b.setBattery(this.Battery);
-            b.setOther(Modes.BATTERY);
+            b.setType(Modes.BATTERY);
             output.add(b);
         }
+
 
         for (Map.Entry<Long, FloatXYZ> entry : Accelerometer.entrySet())
         {
@@ -102,7 +105,7 @@ public class AllMeasurements
             mes.setAccelerometerZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.ACCELEROMETER);
+            mes.setType(Modes.ACCELEROMETER);
             output.add(mes);
         }
 
@@ -116,7 +119,7 @@ public class AllMeasurements
             mes.setGyroscopeZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.GYROSCOPE);
+            mes.setType(Modes.GYROSCOPE);
             output.add(mes);
         }
 
@@ -130,7 +133,7 @@ public class AllMeasurements
             mes.setOrientationZ(value.getZ());
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.ORIENTATION);
+            mes.setType(Modes.ORIENTATION);
             output.add(mes);
         }
 
@@ -142,7 +145,7 @@ public class AllMeasurements
             mes.setLight(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.LIGHT);
+            mes.setType(Modes.LIGHT);
             output.add(mes);
         }
 
@@ -154,7 +157,7 @@ public class AllMeasurements
             mes.setScreenOn(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.SCREEN);
+            mes.setType(Modes.SCREEN);
             output.add(mes);
         }
 
@@ -166,7 +169,7 @@ public class AllMeasurements
             mes.setProximity(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.PROXIMITY);
+            mes.setType(Modes.PROXIMITY);
             output.add(mes);
         }
 
@@ -179,7 +182,7 @@ public class AllMeasurements
             mes.setGoogleActivityValue(value);
             mes.setUserMotion(this.UserMotion);
             mes.setuserPhoneLocation(this.UserPhoneLocation);
-            mes.setOther(Modes.GOOGLEACTIVITY);
+            mes.setType(Modes.GOOGLEACTIVITY);
             output.add(mes);
         }
 //        Collections.sort(output); TODO
@@ -287,6 +290,16 @@ public class AllMeasurements
     public void setBattery(float battery)
     {
         Battery = battery;
+    }
+
+    public float getPressure()
+    {
+        return Pressure;
+    }
+
+    public void setPressure(float preasure)
+    {
+        Pressure = preasure;
     }
 
     public int getSteps()
@@ -433,6 +446,7 @@ public class AllMeasurements
                 ", UserMotion='" + UserMotion + '\'' +
                 ", Steps=" + Steps +
                 ", Battery=" + Battery +
+                ", Pressure=" + Pressure +
                 ", Light=" + formatListByTimeF(Light) +
                 ", ScreenOn=" + formatListByTimeB(ScreenOn) +
                 ", Proximity=" + formatListByTimeF(Proximity) +

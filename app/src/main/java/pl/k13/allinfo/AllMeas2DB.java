@@ -22,6 +22,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     private Integer steps;
     private Float light;
     private Float battery;
+    private Float pressure;
     private Boolean screenOn;
     private Float proximity;
     private Float stationary;
@@ -35,6 +36,8 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
     private Integer lteRssi;
     private String lteOther;
     private String other;
+    private String type;
+    private Float other1;
 
     public interface Modes
     {
@@ -68,6 +71,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         this.steps = 0;
         this.light = 0.0f;
         this.battery = -1.0f;
+        this.pressure = 0.0f;
         this.screenOn = false;
         this.proximity = 0.0f;
         this.stationary = 0.0f;
@@ -81,6 +85,8 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         this.lteRssi = -255;
         this.lteOther = "";
         this.other = "";
+        this.type = "";
+        this.other1 = 0.0f;
     }
 
     @Override
@@ -102,33 +108,34 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.userMotion != "") data.put("userMotion", this.userMotion);
         if (this.userPhoneLocation != "") data.put("userPhoneLocation", this.userPhoneLocation);
         data.put("timestamp", this.timestamp);
-        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerX", this.accelerometerX);
-        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerY", this.accelerometerY);
-        if (this.other == Modes.ACCELEROMETER) data.put("accelerometerZ", this.accelerometerZ);
-        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeX", this.gyroscopeX);
-        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeY", this.gyroscopeY);
-        if (this.other == Modes.GYROSCOPE) data.put("gyroscopeZ", this.gyroscopeZ);
-        if (this.other == Modes.ORIENTATION) data.put("orientationX", this.orientationX);
-        if (this.other == Modes.ORIENTATION) data.put("orientationY", this.orientationY);
-        if (this.other == Modes.ORIENTATION) data.put("orientationZ", this.orientationZ);
-        if (this.other == Modes.GENERAL) data.put("steps", this.steps);
-        if (this.other == Modes.LIGHT) data.put("light", this.light);
-        if (this.other == Modes.SCREEN) data.put("screenOn", this.screenOn);
-        if (this.other == Modes.PROXIMITY) data.put("proximity", this.proximity);
-        if (this.other == Modes.GENERAL) data.put("stationary", this.stationary);
-        if (this.other == Modes.GENERAL) data.put("motion", this.motion);
-        if (this.other == Modes.GENERAL) data.put("significantMotion", this.significantMotion);
-        if (this.other == Modes.GOOGLEACTIVITY)
+        if (this.type == Modes.ACCELEROMETER) data.put("accelerometerX", this.accelerometerX);
+        if (this.type == Modes.ACCELEROMETER) data.put("accelerometerY", this.accelerometerY);
+        if (this.type == Modes.ACCELEROMETER) data.put("accelerometerZ", this.accelerometerZ);
+        if (this.type == Modes.GYROSCOPE) data.put("gyroscopeX", this.gyroscopeX);
+        if (this.type == Modes.GYROSCOPE) data.put("gyroscopeY", this.gyroscopeY);
+        if (this.type == Modes.GYROSCOPE) data.put("gyroscopeZ", this.gyroscopeZ);
+        if (this.type == Modes.ORIENTATION) data.put("orientationX", this.orientationX);
+        if (this.type == Modes.ORIENTATION) data.put("orientationY", this.orientationY);
+        if (this.type == Modes.ORIENTATION) data.put("orientationZ", this.orientationZ);
+        if (this.type == Modes.GENERAL) data.put("steps", this.steps);
+        if (this.type == Modes.LIGHT) data.put("light", this.light);
+        if (this.type == Modes.SCREEN) data.put("screenOn", this.screenOn);
+        if (this.type == Modes.PROXIMITY) data.put("proximity", this.proximity);
+        if (this.type == Modes.GENERAL) data.put("stationary", this.stationary);
+        if (this.type == Modes.GENERAL) data.put("pressure", this.pressure);
+        if (this.type == Modes.GENERAL) data.put("motion", this.motion);
+        if (this.type == Modes.GENERAL) data.put("significantMotion", this.significantMotion);
+        if (this.type == Modes.GOOGLEACTIVITY)
             data.put("googleActivityType", this.googleActivityType);
-        if (this.other == Modes.GOOGLEACTIVITY)
+        if (this.type == Modes.GOOGLEACTIVITY)
             data.put("googleActivityValue", this.googleActivityValue);
-        if (this.other == Modes.GENERAL) data.put("wifiName", this.wifiName);
-        if (this.other == Modes.GENERAL) data.put("wifiRssi", this.wifiRssi);
-        if (this.other == Modes.GENERAL) data.put("wifiOther", this.wifiOther);
-        if (this.other == Modes.GENERAL) data.put("lteRssi", this.lteRssi);
-        if (this.other == Modes.GENERAL) data.put("lteOther", this.lteOther);
-        if (this.other == Modes.BATTERY) data.put("other", this.other + ", " + this.battery.toString());
-        else if (this.other != "") data.put("other", this.other);
+        if (this.type == Modes.GENERAL) data.put("wifiName", this.wifiName);
+        if (this.type == Modes.GENERAL) data.put("wifiRssi", this.wifiRssi);
+        if (this.type == Modes.GENERAL) data.put("wifiOther", this.wifiOther);
+        if (this.type == Modes.GENERAL) data.put("lteRssi", this.lteRssi);
+        if (this.type == Modes.GENERAL) data.put("lteOther", this.lteOther);
+        if (this.type == Modes.BATTERY) data.put("battery", this.battery);
+        if (this.other != "") data.put("other", this.other);
         return data;
     }
 
@@ -227,6 +234,11 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         this.proximity = proximity;
     }
 
+    public void setPressure(Float pressure)
+    {
+        this.pressure = pressure;
+    }
+
     public void setStationary(Float stationary)
     {
         this.stationary = stationary;
@@ -282,5 +294,14 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         this.other = other;
     }
 
+    public String getType()
+    {
+        return type;
+    }
+
+    public void setType(String type)
+    {
+        this.type = type;
+    }
 
 }
