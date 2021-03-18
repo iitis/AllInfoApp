@@ -108,6 +108,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.userMotion != "") data.put("userMotion", this.userMotion);
         if (this.userPhoneLocation != "") data.put("userPhoneLocation", this.userPhoneLocation);
         data.put("timestamp", this.timestamp);
+        data.put("type", this.type);
         if (this.type == Modes.ACCELEROMETER) data.put("accelerometerX", this.accelerometerX);
         if (this.type == Modes.ACCELEROMETER) data.put("accelerometerY", this.accelerometerY);
         if (this.type == Modes.ACCELEROMETER) data.put("accelerometerZ", this.accelerometerZ);
