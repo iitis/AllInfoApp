@@ -37,6 +37,7 @@ public class AllMeasurements
     private HashMap<String, Float> GoogleActivity;
     private WifiMeasurement WifiMeasurement;
     private LTECellInfo LTEMeasurement;
+    private String GPSsats;
     private boolean saved2file;
     private boolean posted2db;
 
@@ -79,6 +80,7 @@ public class AllMeasurements
         m.setWifiOther(this.WifiMeasurement.getBssid() + ", " + this.WifiMeasurement.getAngle());
         m.setLteRssi(this.LTEMeasurement.getSS_Rsrp());
         m.setLteOther(this.LTEMeasurement.getCI_NetName() + ", " + this.LTEMeasurement.getCI_Mnc());
+        m.setOther(this.GPSsats);
         m.setType(Modes.GENERAL);
         output.add(m);
 
@@ -200,6 +202,16 @@ public class AllMeasurements
         ScreenOn = new HashMap<>();
         Proximity = new HashMap<>();
         GoogleActivity = new HashMap<>();
+    }
+
+    public String getGPSsats()
+    {
+        return GPSsats;
+    }
+
+    public void setGPSsats(String GPSsats)
+    {
+        this.GPSsats = GPSsats;
     }
 
     public String getExperimentId()

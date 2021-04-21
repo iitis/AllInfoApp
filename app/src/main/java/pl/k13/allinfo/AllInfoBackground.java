@@ -16,11 +16,16 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.hardware.display.DisplayManager;
 import android.icu.text.SimpleDateFormat;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.location.OnNmeaMessageListener;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 import android.os.BatteryManager;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -86,6 +91,11 @@ public class AllInfoBackground extends Service implements SensorEventListener
     private Timer timer500msTick;
     private Timer timerPosting;
 
+    private LocationManager gpsManager;
+    LocationListener gpsListener;
+    OnNmeaMessageListener nmeaMessageListener;
+    HashMap<Short, GPSsatInfo> gpsSats = new HashMap<>();
+
 
     WifiManager manager;
 
@@ -106,7 +116,6 @@ public class AllInfoBackground extends Service implements SensorEventListener
     BroadcastReceiver activityBroadcastReceiver;
     BroadcastReceiver angleBroadcastReceiver;
     BroadcastReceiver batteryBroadcastReceiver;
-
 
 
     private float[] lastAccelerometer = new float[3];
@@ -227,6 +236,8 @@ public class AllInfoBackground extends Service implements SensorEventListener
     {
         Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setUserMotion(stringUserMotion);
         Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setUserPhoneLocation(stringUserPhoneLocation);
+        Objects.requireNonNull(allMeasurementsHashMap.get(measureInit())).setGPSsats(gpsSats.toString());
+
     }
 
 
@@ -318,46 +329,46 @@ public class AllInfoBackground extends Service implements SensorEventListener
 //                @Override
 //                public void run()
 //                {
-                    long currentTimeKey = measureInit();
-                    SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
-                    for (Long key : keyList)
+            long currentTimeKey = measureInit();
+            SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
+            for (Long key : keyList)
+            {
+                if (key != currentTimeKey)
+                {
+                    if (Objects.requireNonNull(allMeasurementsHashMap.get(key)).isSaved2file() && Objects.requireNonNull(allMeasurementsHashMap.get(key)).isPosted2db())
                     {
-                        if (key != currentTimeKey)
-                        {
-                            if (Objects.requireNonNull(allMeasurementsHashMap.get(key)).isSaved2file() && Objects.requireNonNull(allMeasurementsHashMap.get(key)).isPosted2db())
-                            {
-                                allMeasurementsHashMap.remove(key);
+                        allMeasurementsHashMap.remove(key);
 //                                Log.i("REMOVED", "Key: " + key);
-                            } else
-                            {
-                                try
-                                {
+                    } else
+                    {
+                        try
+                        {
 //                                    Log.d("NOWY ZAPIS DO bAZY", key.toString());
-                                    JSONArray jsonArray = new JSONArray();
-                                    if (allMeasurementsHashMap.containsKey(key))
-                                        for (AllMeas2DB ent : allMeasurementsHashMap.get(key).toAllMesList())
-                                            jsonArray.put(ent.toJSONObject());
-                                    JSONObject jsonCollection = new JSONObject();
-                                    jsonCollection.put("collection", jsonArray);
-                                    HttpURLConnection conn = prepareConnection();
-                                    OutputStream os = new BufferedOutputStream(conn.getOutputStream());
+                            JSONArray jsonArray = new JSONArray();
+                            if (allMeasurementsHashMap.containsKey(key))
+                                for (AllMeas2DB ent : allMeasurementsHashMap.get(key).toAllMesList())
+                                    jsonArray.put(ent.toJSONObject());
+                            JSONObject jsonCollection = new JSONObject();
+                            jsonCollection.put("collection", jsonArray);
+                            HttpURLConnection conn = prepareConnection();
+                            OutputStream os = new BufferedOutputStream(conn.getOutputStream());
 //                                    GZIPOutputStream os = new GZIPOutputStream(conn.getOutputStream());
-                                    os.write(jsonCollection.toString().getBytes());
-                                    os.flush();
-                                    os.close();
-                                    if (conn.getResponseCode() == 201)
-                                        if (allMeasurementsHashMap.get(key) != null)
-                                            Objects.requireNonNull(allMeasurementsHashMap.get(key)).setPosted2db(true);
-                                    conn.disconnect();
-                                    Log.i("STATUS", String.valueOf(conn.getResponseCode()));
-                                    Log.i("MSG", conn.getResponseMessage());
-                                } catch (JSONException | IOException e)
-                                {
-                                    e.printStackTrace();
-                                }
-                            }
+                            os.write(jsonCollection.toString().getBytes());
+                            os.flush();
+                            os.close();
+                            if (conn.getResponseCode() == 201)
+                                if (allMeasurementsHashMap.get(key) != null)
+                                    Objects.requireNonNull(allMeasurementsHashMap.get(key)).setPosted2db(true);
+                            conn.disconnect();
+                            Log.i("STATUS", String.valueOf(conn.getResponseCode()));
+                            Log.i("MSG", conn.getResponseMessage());
+                        } catch (JSONException | IOException e)
+                        {
+                            e.printStackTrace();
                         }
                     }
+                }
+            }
 //                }
 //            });
 //            thread.start();
@@ -373,61 +384,61 @@ public class AllInfoBackground extends Service implements SensorEventListener
 //                @Override
 //                public void run()
 //                {
-                    try
+            try
+            {
+                BufferedOutputStream bos = null;
+                @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
+                Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
+                File dir = new File(getExternalFilesDir(null).getAbsolutePath());
+                File[] filesInDir = dir.listFiles();
+                for (File f : filesInDir)  //deletes older files
+                {
+                    if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
                     {
-                        BufferedOutputStream bos = null;
-                        @SuppressLint("SimpleDateFormat") File todayFile = new File(getExternalFilesDir(null), new SimpleDateFormat("yyyy-MM-dd").format(new Date()) + "-pomiar.txt");
-                        Log.d(LOG_TAG, "File: " + todayFile.getAbsolutePath());
-                        File dir = new File(getExternalFilesDir(null).getAbsolutePath());
-                        File[] filesInDir = dir.listFiles();
-                        for (File f : filesInDir)  //deletes older files
+                        if (f.delete())
+                            Log.d(LOG_TAG, "Deleted");
+                    }
+                }
+                try
+                {
+                    bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
+                    long timeKey = measureInit();
+                    SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
+                    for (Long key : keyList)
+                    {
+                        if ((key != timeKey) && (!allMeasurementsHashMap.get(key).isSaved2file()))
                         {
-                            if (!f.getAbsolutePath().contentEquals(todayFile.getAbsolutePath()))
+                            JSONArray jsonArray = new JSONArray();
+                            if (allMeasurementsHashMap.containsKey(key))
                             {
-                                if (f.delete())
-                                    Log.d(LOG_TAG, "Deleted");
-                            }
-                        }
-                        try
-                        {
-                            bos = new BufferedOutputStream(new FileOutputStream(todayFile, true));
-                            long timeKey = measureInit();
-                            SortedSet<Long> keyList = new TreeSet<>(allMeasurementsHashMap.keySet());
-                            for (Long key : keyList)
-                            {
-                                if ((key != timeKey) && (!allMeasurementsHashMap.get(key).isSaved2file()))
+                                for (AllMeas2DB ent : allMeasurementsHashMap.get(key).toAllMesList())
                                 {
-                                    JSONArray jsonArray = new JSONArray();
-                                    if (allMeasurementsHashMap.containsKey(key))
-                                    {
-                                        for (AllMeas2DB ent : allMeasurementsHashMap.get(key).toAllMesList())
-                                        {
-                                            jsonArray.put(ent.toJSONObject());
-                                        }
-                                    }
-                                    bos.write(jsonArray.toString().getBytes());
-                                    bos.write("\n".getBytes());
-                                    Log.d(LOG_TAG, "File saved");
-                                    allMeasurementsHashMap.get(key).setSaved2file(true);
+                                    jsonArray.put(ent.toJSONObject());
                                 }
                             }
-                        } catch (IOException e)
-                        {
-                            e.printStackTrace();
-                        } finally
-                        {
-                            try
-                            {
-                                if (bos != null) bos.close();
-                            } catch (IOException e)
-                            {
-                                e.printStackTrace();
-                            }
+                            bos.write(jsonArray.toString().getBytes());
+                            bos.write("\n".getBytes());
+                            Log.d(LOG_TAG, "File saved");
+                            allMeasurementsHashMap.get(key).setSaved2file(true);
                         }
-                    } catch (Exception e)
+                    }
+                } catch (IOException e)
+                {
+                    e.printStackTrace();
+                } finally
+                {
+                    try
+                    {
+                        if (bos != null) bos.close();
+                    } catch (IOException e)
                     {
                         e.printStackTrace();
                     }
+                }
+            } catch (Exception e)
+            {
+                e.printStackTrace();
+            }
 //                }
 //            });
 //            thread.start();
@@ -453,6 +464,38 @@ public class AllInfoBackground extends Service implements SensorEventListener
         mIntentService = new Intent(this, DetectedActivitiesIntentService.class);
         mPendingIntent = PendingIntent.getService(this, 1, mIntentService, PendingIntent.FLAG_UPDATE_CURRENT);
         requestActivityUpdatesButtonHandler();
+
+        gpsManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        gpsListener = new LocationListener()
+        {
+            @Override
+            public void onLocationChanged(Location location)
+            {
+                LocationChanged(location);
+            }
+
+            @Override
+            public void onStatusChanged(String provider, int status, Bundle extras)
+            {
+            }
+
+            @Override
+            public void onProviderEnabled(String provider)
+            {
+            }
+
+            @Override
+            public void onProviderDisabled(String provider)
+            {
+            }
+        };
+        nmeaMessageListener = (message, timestamp) -> NmeaMessage(message, timestamp);
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED)
+        {
+            gpsManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, gpsListener);
+            gpsManager.addNmeaListener(nmeaMessageListener);
+        }
     }
 
     @Override
@@ -555,7 +598,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
             {
                 int level = intent.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
                 int scale = intent.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                float batteryPct = level * 100 / (float)scale;
+                float batteryPct = level * 100 / (float) scale;
                 allMeasurementsHashMap.get(measureInit()).setBattery(batteryPct);
             }
         };
@@ -591,6 +634,50 @@ public class AllInfoBackground extends Service implements SensorEventListener
         return START_NOT_STICKY;
     }
 
+    public void LocationChanged(@NotNull Location location)
+    {
+//        Log.d(LOG_TAG, "LocChanged: " + location.toString());
+    }
+
+    public void NmeaMessage(String message, long timestamp)
+    {
+        if (message.startsWith("$GPGSV"))
+        {
+//            Log.d("NMEA", timestamp + " " + message);
+
+            String[] parts = message.split(",");
+            short lens;
+            if (parts.length > 5)
+            {
+                lens = (short) (parts.length - 5);
+                if (lens % 4 == 0)
+                {
+                    for (int i = 0; i < lens / 4; i++)
+                    {
+                        GPSsatInfo oneSat = new GPSsatInfo();
+                        oneSat.setTimestamp(timestamp);
+                        oneSat.setId(Short.parseShort(parts[4 + i * 4]));
+                        oneSat.setElevation(Short.parseShort(parts[5 + i * 4]));
+                        oneSat.setAzimuth(Short.parseShort(parts[6 + i * 4]));
+                        oneSat.setSnr(Short.parseShort(parts[7 + i * 4]));
+
+                        if (!gpsSats.containsKey(oneSat.getId()))
+                            gpsSats.put(oneSat.getId(), oneSat);
+                        else
+                        {
+                            gpsSats.get(oneSat.getId()).setTimestamp(oneSat.getTimestamp());
+                            gpsSats.get(oneSat.getId()).setId(oneSat.getId());
+                            gpsSats.get(oneSat.getId()).setAzimuth(oneSat.getAzimuth());
+                            gpsSats.get(oneSat.getId()).setElevation(oneSat.getElevation());
+                            gpsSats.get(oneSat.getId()).setSnr(oneSat.getSnr());
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public IBinder onBind(Intent intent)
     {
@@ -600,6 +687,9 @@ public class AllInfoBackground extends Service implements SensorEventListener
     @Override
     public void onDestroy()
     {
+        gpsManager.removeNmeaListener(nmeaMessageListener);
+        gpsManager.removeUpdates(gpsListener);
+
         if (accelerometerSensor != null)
             sensorManager.unregisterListener(this, accelerometerSensor);
         if (gyroscopeSensor != null)

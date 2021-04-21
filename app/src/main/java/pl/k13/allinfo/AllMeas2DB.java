@@ -136,7 +136,7 @@ public class AllMeas2DB implements Comparable<AllMeas2DB>
         if (this.type == Modes.GENERAL) data.put("lteRssi", this.lteRssi);
         if (this.type == Modes.GENERAL) data.put("lteOther", this.lteOther);
         if (this.type == Modes.BATTERY) data.put("battery", this.battery);
-        if (this.other != "") data.put("other", this.other);
+        if (this.type == Modes.GENERAL) data.put("other", this.other);
         return data;
     }
 
