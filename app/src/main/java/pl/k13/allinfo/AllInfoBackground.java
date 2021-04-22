@@ -636,7 +636,24 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     public void LocationChanged(@NotNull Location location)
     {
-        Log.d("GPS2", "LocChanged: " + location.toString());
+        GPSsatInfo oneSat = new GPSsatInfo();
+        oneSat.setTimestamp(System.currentTimeMillis() / 1000);
+        oneSat.setId((short) 0);
+        oneSat.setElevation((short)  (location.getAccuracy()*10));
+        oneSat.setAzimuth((short)  (location.getAccuracy()*10));
+        oneSat.setSnr((short) (location.getAccuracy()*10));
+
+        Log.d("GPS LocationChanged", oneSat.toString());
+        if (!gpsSats.containsKey(oneSat.getId()))
+            gpsSats.put(oneSat.getId(), oneSat);
+        else
+        {
+            gpsSats.get(oneSat.getId()).setTimestamp(oneSat.getTimestamp());
+            gpsSats.get(oneSat.getId()).setId(oneSat.getId());
+            gpsSats.get(oneSat.getId()).setAzimuth(oneSat.getAzimuth());
+            gpsSats.get(oneSat.getId()).setElevation(oneSat.getElevation());
+            gpsSats.get(oneSat.getId()).setSnr(oneSat.getSnr());
+        }
     }
 
     public void NmeaMessage(String message, long timestamp)
