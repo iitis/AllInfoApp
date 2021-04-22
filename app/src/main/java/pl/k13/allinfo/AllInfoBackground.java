@@ -636,16 +636,26 @@ public class AllInfoBackground extends Service implements SensorEventListener
 
     public void LocationChanged(@NotNull Location location)
     {
-//        Log.d(LOG_TAG, "LocChanged: " + location.toString());
+        Log.d("GPS2", "LocChanged: " + location.toString());
     }
 
     public void NmeaMessage(String message, long timestamp)
     {
         if (message.startsWith("$GPGSV"))
         {
-//            Log.d("NMEA", timestamp + " " + message);
-
+            message = message.replaceAll(",,", ",-1,");
+            message = message.replaceAll(",,", ",-1,");
             String[] parts = message.split(",");
+            if (parts.length > 5)
+            {
+                if ((parts.length - 5) % 4 == 0)
+                {
+                    message = message.replaceAll(",1\\*", "*"); //XIAOMI
+                }
+            }
+            message = message.replaceAll(",\\*", ",-1*");
+            parts = message.split(",|\\*");
+
             short lens;
             if (parts.length > 5)
             {
@@ -661,6 +671,7 @@ public class AllInfoBackground extends Service implements SensorEventListener
                         oneSat.setAzimuth(Short.parseShort(parts[6 + i * 4]));
                         oneSat.setSnr(Short.parseShort(parts[7 + i * 4]));
 
+                        Log.d("GPS", oneSat.toString());
                         if (!gpsSats.containsKey(oneSat.getId()))
                             gpsSats.put(oneSat.getId(), oneSat);
                         else
@@ -671,7 +682,6 @@ public class AllInfoBackground extends Service implements SensorEventListener
                             gpsSats.get(oneSat.getId()).setElevation(oneSat.getElevation());
                             gpsSats.get(oneSat.getId()).setSnr(oneSat.getSnr());
                         }
-
                     }
                 }
             }
