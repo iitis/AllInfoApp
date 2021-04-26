@@ -683,12 +683,18 @@ public class AllInfoBackground extends Service implements SensorEventListener
                     {
                         GPSsatInfo oneSat = new GPSsatInfo();
                         oneSat.setTimestamp(timestamp);
-                        oneSat.setId(Short.parseShort(parts[4 + i * 4]));
-                        oneSat.setElevation(Short.parseShort(parts[5 + i * 4]));
-                        oneSat.setAzimuth(Short.parseShort(parts[6 + i * 4]));
-                        oneSat.setSnr(Short.parseShort(parts[7 + i * 4]));
 
-                        Log.d("GPS", oneSat.toString());
+                        try
+                        {
+                            oneSat.setId(Short.parseShort(parts[4 + i * 4]));
+                            oneSat.setElevation((short) Float.parseFloat(parts[5 + i * 4]));
+                            oneSat.setAzimuth((short) Float.parseFloat(parts[6 + i * 4]));
+                            oneSat.setSnr((short) Float.parseFloat(parts[7 + i * 4]));
+                        } finally
+                        {
+                            Log.d("GPS", oneSat.toString());
+                        }
+
                         if (!gpsSats.containsKey(oneSat.getId()))
                             gpsSats.put(oneSat.getId(), oneSat);
                         else
